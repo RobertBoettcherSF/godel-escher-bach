@@ -325,17 +325,29 @@ footer {
 .hint-line { font-weight: 700; letter-spacing: 0.04em; }
 
 .picture-frame {
-  background: #fffdf8;
+  background: #e7d3bc;
   border: 1px solid var(--line);
   border-radius: 28px;
   overflow: hidden;
 }
-#picture { width: 100%; height: auto; display: block; touch-action: manipulation; }
-.animal { cursor: pointer; }
-.animal:focus-visible { outline: none; }
-.animal:focus-visible rect { stroke: #2c6bed; stroke-width: 0.08; }
-.beak { fill: #f0a202; pointer-events: none; }
-.eye, .pupil { pointer-events: none; }
+#picture { width: 100%; height: auto; display: block; touch-action: manipulation; background: #e7d3bc; }
+.animal { cursor: pointer; outline: none; }
+.animal .body { stroke: none; }
+.animal .glow {
+  fill: none;
+  stroke: #7eb6ff;
+  stroke-width: 18;
+  stroke-linejoin: round;
+  opacity: 0;
+  pointer-events: none;
+}
+.animal.found .glow { opacity: 0.9; }
+.animal .mark, .animal .beak, .animal .eye-ring, .animal .eye-white, .animal .pupil {
+  pointer-events: none;
+}
+.beak { fill: #f0a202; }
+.eye-ring { fill: #241833; }
+.eye-white { fill: #fff6ea; }
 .pupil { fill: #241833; }
 .fade {
   display: grid;

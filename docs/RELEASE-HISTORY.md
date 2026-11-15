@@ -1,5 +1,13 @@
 # Release history
 
+## v0.3.1
+
+Figure and ground, drawn as animals.
+
+- The block grid is gone. Each bird is one smooth outline, with a wing, tail, beak and eye. Each fish is the shape under that belly, with a tail, a fin and an eye.
+- Finding a gap animal lights a soft glow that follows that animal’s outline.
+- Ada still owns the layer, the inks, the taps and undo. Two swaps restore every ink. `miu.wasm` and `steps.wasm` are unchanged.
+
 ## v0.3
 
 Figure and ground.
