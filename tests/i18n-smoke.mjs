@@ -30,7 +30,7 @@ test("four languages share every caption", () => {
 
 test("visible copy and the version stamp match the pages", async () => {
   const version = (await readFile(new URL("../version.txt", import.meta.url), "utf8")).trim();
-  assert.match(version, /^v0\.2 b\d{8}-\d{4} [0-9a-f]{7}$/);
+  assert.match(version, /^v0\.3 b\d{8}-\d{4} [0-9a-f]{7}$/);
   const used = new Set();
   for (const name of pages) {
     const html = await readFile(new URL(`../${name}`, import.meta.url), "utf8");

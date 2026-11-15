@@ -1,5 +1,16 @@
 # Release history
 
+## v0.3
+
+Figure and ground.
+
+- Original birds and fish share one picture. The pale gaps are animals too.
+- A tap swaps which layer is ink. The shapes that just became the picture wiggle.
+- A slider fades between the two views. “Tap a hidden one” is a find-the-gap game.
+- The tile layout and the inks are Ada in `figure.wasm`.
+- Undo, reset, and the same saved sound switch. F9 shows which animals are in front and the tap count.
+- The gallery tile is open. The MIU puzzle and the endless steps are unchanged.
+
 ## v0.2
 
 Endless steps.

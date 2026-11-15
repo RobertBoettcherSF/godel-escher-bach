@@ -1,6 +1,6 @@
 # Workflow
 
-GitHub Pages serves the root of `main`. There is no build on the server. `miu.wasm` and `steps.wasm` are already in the repository.
+GitHub Pages serves the root of `main`. There is no build on the server. `miu.wasm`, `steps.wasm` and `figure.wasm` are already in the repository.
 
 ## Change a rule or a page
 
@@ -15,7 +15,7 @@ GitHub Pages serves the root of `main`. There is no build on the server. `miu.wa
 ./tools/stamp.sh
 ```
 
-The stamp is `v0.2 bYYYYMMDD-HHMM <shortcommit>`. The clock is Europe/Berlin. The short commit is HEAD at the moment of stamping, so it names the source commit and the stamp commit comes next. `version.txt` and every `<span class="version">` carry the same line.
+The stamp is `v0.3 bYYYYMMDD-HHMM <shortcommit>`. The clock is Europe/Berlin. The short commit is HEAD at the moment of stamping, so it names the source commit and the stamp commit comes next. `version.txt` and every `<span class="version">` carry the same line.
 
 ## Words
 
@@ -23,7 +23,7 @@ Visible copy is in `i18n.js` for en-GB (the `en` key), de, es and fr. The Englis
 
 ## F9
 
-F9 opens a small overlay: version, WebAssembly status, current string, history length, last status. On the steps page it also shows the step count and the gap. It is for checking a page, not part of the game.
+F9 opens a small overlay: version, WebAssembly status, current string, history length, last status. On the steps page it also shows the step count and the gap. On the figure page it shows which animals are in front and the tap count. It is for checking a page, not part of the game.
 
 ## Sound and language
 

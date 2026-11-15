@@ -38,6 +38,34 @@ export function toggleMuted() {
   return muted;
 }
 
+export function playChime() {
+  if (muted) return false;
+  const AC = globalThis.AudioContext || globalThis.webkitAudioContext;
+  if (!AC) return true;
+  try {
+    if (!context) context = new AC();
+    if (context.state === "suspended") context.resume().catch(() => {});
+    const start = context.currentTime;
+    [523, 659].forEach((freq, index) => {
+      const osc = context.createOscillator();
+      const gain = context.createGain();
+      const at = start + index * 0.09;
+      osc.type = "sine";
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.0001, at);
+      gain.gain.exponentialRampToValueAtTime(0.04, at + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, at + 0.2);
+      osc.connect(gain);
+      gain.connect(context.destination);
+      osc.start(at);
+      osc.stop(at + 0.22);
+    });
+  } catch {
+    /* autoplay limits */
+  }
+  return true;
+}
+
 export function playRise(step) {
   if (muted) return false;
   const freq = 196 * 2 ** (Math.min(Math.max(step, 1), 24) / 12);

@@ -4,6 +4,9 @@ Two Ada packages are compiled to WebAssembly with AdaWebPack 24 (GNAT-LLVM, wasm
 
 - `src/miu.ads`, `src/miu.adb` → `miu.wasm` (the block rules)
 - `src/steps.ads`, `src/steps.adb` → `steps.wasm` (halving steps)
+- `src/figure.ads`, `src/figure.adb` → `figure.wasm` (figure and ground)
+
+`./build.sh figure` rebuilds only the third module, so the first two wasm files stay byte-for-byte as they were.
 
 ## Tools
 
@@ -48,6 +51,8 @@ Integers are 32-bit. Character arrays are bytes. `miu_reset`, `miu_apply(rule, p
 `miu_meta` is eight integers: length, I-count, history length, status, last rule, last position, previous length, unused. Status is 0 ok, 1 bad rule, 2 cannot, 3 bad spot, 4 too long, 5 no undo. History is capped at 64 steps; the oldest step is dropped after that. Strings are capped at 64 blocks. Doubling needs a non-empty tail, so a lone M does not glow.
 
 `steps.wasm` exports `steps_reset`, `steps_step`, `steps_undo`, `steps_max`, `steps_scale`, and the addresses of `steps_meta` and `steps_widths`. After n steps the gap numerator is 1 and the denominator is 2ⁿ (1/1 at the start). The sum of the steps is one less than that denominator, so it stays below 1. Widths are integers in units of 1/2³⁰. The page stops at 30 steps because 2³⁰ still fits in a 32-bit signed integer.
+
+`figure.wasm` exports the grid size, a blend setter, tap, undo, and the cell and shape tables. Each cell stores one shape. Each shape stores one layer, so the two layers partition the picture. Blend 0 paints layer 0 at ink 255 and layer 1 at ink 0. Blend B paints layer 0 at `255 - (255*B)/100` and layer 1 at `(255*B)/100`. A swap replaces the blend with `100 - blend`, so a second swap restores every ink.
 
 ## Licences
 

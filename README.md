@@ -6,9 +6,11 @@ A browser companion to the themes of *Gödel, Escher, Bach*, one chapter at a ti
 
 v0.1 opens the MIU blocks. M, I and U are coloured blocks. Four picture-buttons apply the rules. The count of I blocks is never a multiple of 3, so MU stays out of reach. The rules are Ada, compiled to `miu.wasm`.
 
-v0.2 opens the endless steps. A runner closes half the remaining gap on every tap, and the steps are coloured blocks in one bar. That arithmetic is Ada, compiled to `steps.wasm`. JavaScript only draws.
+v0.2 opens the endless steps. A runner closes half the remaining gap on every tap, and the steps are coloured blocks in one bar. That arithmetic is Ada, compiled to `steps.wasm`.
 
-English (UK), German, Spanish and French. Six further chapters are drawn as closed tiles.
+v0.3 opens figure and ground. Birds and fish share one picture, and the gaps are animals too. The layout and the inks are Ada, compiled to `figure.wasm`. JavaScript only draws.
+
+English (UK), German, Spanish and French. Five further chapters are drawn as closed tiles.
 
 ## Run locally
 
@@ -21,8 +23,8 @@ Open http://localhost:8000. F9 shows the version, whether `miu.wasm` loaded, the
 ## Checks
 
 ```sh
-gprbuild -P tests/smoke.gpr && ./obj/native/smoke && ./obj/native/steps_smoke
+gprbuild -P tests/smoke.gpr && ./obj/native/smoke && ./obj/native/steps_smoke && ./obj/native/figure_smoke
 npm test
 ```
 
-The MIU test searches every string reachable from MI up to length 12. The steps test checks that after n steps the gap is 1/2ⁿ and the sum stays below 1. See [docs/BUILD.md](docs/BUILD.md) to rebuild the wasm, and [docs/WORKFLOW.md](docs/WORKFLOW.md) for the stamp.
+The MIU test searches every string reachable from MI up to length 12. The steps test checks that after n steps the gap is 1/2ⁿ and the sum stays below 1. The figure test checks that every cell belongs to one layer and that two swaps restore the picture. See [docs/BUILD.md](docs/BUILD.md) to rebuild the wasm, and [docs/WORKFLOW.md](docs/WORKFLOW.md) for the stamp.

@@ -34,14 +34,30 @@ compile_module() {
   echo "Built $name.wasm ($(wc -c < "$name.wasm") bytes)"
 }
 
-compile_module miu src/miu.adb \
-  --export=miu_max_length --export=miu_max_history \
-  --export=miu_chars --export=miu_meta --export=miu_ready \
-  --export=miu_pos_count --export=miu_positions \
-  --export=miu_hist_len --export=miu_hist_chars \
-  --export=miu_reset --export=miu_apply --export=miu_undo --export=miu_resolve
+want=${1:-all}
 
-compile_module steps src/steps.adb \
-  --export=steps_max --export=steps_scale \
-  --export=steps_meta --export=steps_widths \
-  --export=steps_reset --export=steps_step --export=steps_undo
+if [ "$want" = "all" ] || [ "$want" = "miu" ]; then
+  compile_module miu src/miu.adb \
+    --export=miu_max_length --export=miu_max_history \
+    --export=miu_chars --export=miu_meta --export=miu_ready \
+    --export=miu_pos_count --export=miu_positions \
+    --export=miu_hist_len --export=miu_hist_chars \
+    --export=miu_reset --export=miu_apply --export=miu_undo --export=miu_resolve
+fi
+
+if [ "$want" = "all" ] || [ "$want" = "steps" ]; then
+  compile_module steps src/steps.adb \
+    --export=steps_max --export=steps_scale \
+    --export=steps_meta --export=steps_widths \
+    --export=steps_reset --export=steps_step --export=steps_undo
+fi
+
+if [ "$want" = "all" ] || [ "$want" = "figure" ]; then
+  compile_module figure src/figure.adb \
+    --export=figure_cols --export=figure_rows --export=figure_shapes \
+    --export=figure_meta \
+    --export=figure_cell_shape --export=figure_cell_layer --export=figure_cell_ink \
+    --export=figure_shape_layer --export=figure_shape_kind --export=figure_shape_head \
+    --export=figure_shape_dir_c --export=figure_shape_dir_r \
+    --export=figure_reset --export=figure_blend --export=figure_tap --export=figure_undo
+fi

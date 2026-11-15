@@ -20,6 +20,8 @@ export function refreshDebug() {
   set("dbg-error", data.error ?? "—");
   set("dbg-steps", data.steps ?? "—");
   set("dbg-gap", data.gap ?? "—");
+  set("dbg-layer", data.layer ?? "—");
+  set("dbg-taps", data.taps ?? "—");
 }
 
 export function bindDebug() {
