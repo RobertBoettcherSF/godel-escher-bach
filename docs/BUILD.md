@@ -1,6 +1,9 @@
 # Building the MIU engine
 
-The blocks follow rules written in Ada (`src/miu.ads`, `src/miu.adb`). `build.sh` compiles that package to `miu.wasm` with AdaWebPack 24, which is GNAT-LLVM targeting wasm32. JavaScript only loads the module and draws. The compiled `miu.wasm` is committed so GitHub Pages does not need a compiler.
+Two Ada packages are compiled to WebAssembly with AdaWebPack 24 (GNAT-LLVM, wasm32). JavaScript only loads a module and draws. The compiled files are committed so GitHub Pages does not need a compiler.
+
+- `src/miu.ads`, `src/miu.adb` → `miu.wasm` (the block rules)
+- `src/steps.ads`, `src/steps.adb` → `steps.wasm` (halving steps)
 
 ## Tools
 
@@ -23,11 +26,11 @@ The download lands in `toolchain/`, which is gitignored. The same steps are used
 
 ```sh
 ./build.sh
-gprbuild -P tests/smoke.gpr && ./obj/native/smoke
+gprbuild -P tests/smoke.gpr && ./obj/native/smoke && ./obj/native/steps_smoke
 npm test
 ```
 
-`make test` runs the native search, rebuilds `miu.wasm`, then the Node smokes. `build.sh` treats Ada warnings as errors (`-gnatwa -gnatwe`). The native project does too, and it enables assertions (`-gnata`).
+`make test` runs both native programs, rebuilds both wasm files, then the Node smokes. `build.sh` treats Ada warnings as errors (`-gnatwa -gnatwe`). The native project does too, and it enables assertions (`-gnata`).
 
 `llvm-gcc` is invoked as:
 
@@ -43,6 +46,8 @@ llvm-gcc -c --target=wasm32 -O2 -gnat2012 -gnatp -gnatwa -gnatwe \
 Integers are 32-bit. Character arrays are bytes. `miu_reset`, `miu_apply(rule, position)` and `miu_undo` update the arrays. Rules are 1 add U, 2 double the tail, 3 replace III, 4 delete UU. Whole-string rules take position 0. A spot is a 1-based index. `miu_resolve(rule, tap)` returns the match to use, or 0.
 
 `miu_meta` is eight integers: length, I-count, history length, status, last rule, last position, previous length, unused. Status is 0 ok, 1 bad rule, 2 cannot, 3 bad spot, 4 too long, 5 no undo. History is capped at 64 steps; the oldest step is dropped after that. Strings are capped at 64 blocks. Doubling needs a non-empty tail, so a lone M does not glow.
+
+`steps.wasm` exports `steps_reset`, `steps_step`, `steps_undo`, `steps_max`, `steps_scale`, and the addresses of `steps_meta` and `steps_widths`. After n steps the gap numerator is 1 and the denominator is 2ⁿ (1/1 at the start). The sum of the steps is one less than that denominator, so it stays below 1. Widths are integers in units of 1/2³⁰. The page stops at 30 steps because 2³⁰ still fits in a 32-bit signed integer.
 
 ## Licences
 

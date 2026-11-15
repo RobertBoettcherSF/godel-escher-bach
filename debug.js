@@ -18,6 +18,8 @@ export function refreshDebug() {
   set("dbg-string", data.string ?? "—");
   set("dbg-path", data.history ?? "—");
   set("dbg-error", data.error ?? "—");
+  set("dbg-steps", data.steps ?? "—");
+  set("dbg-gap", data.gap ?? "—");
 }
 
 export function bindDebug() {

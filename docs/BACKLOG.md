@@ -1,9 +1,9 @@
 # Backlog
 
-Only item 1 is in this release. The gallery already lists the rest, in this order, as closed chapters.
+Items 1 and 2 are in this release. The gallery lists the rest, in this order, as closed chapters.
 
 1. **MIU blocks** — done in v0.1. Four rules, the I counter, the path, undo, four languages.
-2. **Endless steps** — two voices and a walk that never finishes. Coming soon.
+2. **Endless steps** — done in v0.2. Each step closes half the remaining gap. The steps are coloured blocks in one bar and never fill it.
 3. **Figure and ground** — a shape and the space around it. Coming soon.
 4. **Nesting** — pictures inside pictures. Coming soon.
 5. **Crab canon** — a line that can be read forwards and back. Coming soon.

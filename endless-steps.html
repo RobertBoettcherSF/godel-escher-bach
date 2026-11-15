@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="This chapter is still being drawn.">
+<meta name="description" content="A runner closes half the remaining gap on every step. The steps add up inside one bar and never quite fill it.">
 <title>Endless steps</title>
 <link rel="icon" href="favicon.svg">
 <link rel="stylesheet" href="styles.css?v=1">
-<script type="module" src="shell.js?v=1"></script>
+<script type="module" src="steps.js?v=2"></script>
 </head>
 <body data-page-title="chapter2">
 <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -26,20 +26,68 @@
     <button type="button" id="sound-toggle" class="tool" aria-pressed="true"><span data-i18n="soundOn">Sound on</span></button>
   </div>
 </header>
-<main id="main" class="soon-main">
-  <p class="eyebrow" data-i18n="locked">Soon</p>
-  <div class="lock" aria-hidden="true">🔒</div>
+<main id="main">
   <h1 data-i18n="chapter2">Endless steps</h1>
-  <p data-i18n="soon">Still drawing this chapter.</p>
-  <a class="back" href="gallery.html" data-i18n="back">Back</a>
+  <p data-i18n="stepsLead">Half the gap, each tap.</p>
+  <p id="resting" class="resting" hidden data-i18n="resting">The blocks are resting.</p>
+  <div class="race">
+    <div id="lane" class="lane">
+      <div class="ground" aria-hidden="true"></div>
+      <div id="runner" class="runner">
+        <svg viewBox="0 0 72 84" aria-hidden="true">
+          <path d="M6 28 H22 M4 40 H18" stroke="#f0a202" stroke-width="4" stroke-linecap="round"/>
+          <circle cx="40" cy="18" r="11" fill="#2c6bed"/>
+          <circle cx="44" cy="16" r="2" fill="#fff6ea"/>
+          <path d="M30 36 C38 32 46 36 50 46" fill="none" stroke="#2c6bed" stroke-width="7" stroke-linecap="round"/>
+          <path d="M46 48 L28 62" fill="none" stroke="#2c6bed" stroke-width="6" stroke-linecap="round"/>
+          <path d="M48 50 L66 70" fill="none" stroke="#241833" stroke-width="6" stroke-linecap="round"/>
+          <path d="M34 34 L54 28" fill="none" stroke="#e23b4a" stroke-width="5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div id="tortoise" class="tortoise">
+        <svg viewBox="0 0 170 120" aria-hidden="true">
+          <ellipse cx="46" cy="98" rx="16" ry="8" fill="#c4a15a"/>
+          <ellipse cx="86" cy="104" rx="16" ry="8" fill="#c4a15a"/>
+          <ellipse cx="122" cy="98" rx="14" ry="7" fill="#c4a15a"/>
+          <ellipse cx="96" cy="70" rx="54" ry="36" fill="#3f8f5b"/>
+          <ellipse cx="96" cy="70" rx="34" ry="22" fill="#7dcb86"/>
+          <path d="M76 60 Q96 48 116 60" fill="none" stroke="#2c6a40" stroke-width="3" stroke-linecap="round"/>
+          <path d="M80 76 Q96 90 114 76" fill="none" stroke="#2c6a40" stroke-width="3" stroke-linecap="round"/>
+          <path d="M96 52 V90" fill="none" stroke="#2c6a40" stroke-width="3"/>
+          <ellipse cx="40" cy="72" rx="20" ry="15" fill="#e2c07a"/>
+          <circle cx="30" cy="68" r="3" fill="#241833"/>
+          <circle cx="31" cy="67" r="1" fill="#fff6ea"/>
+          <path d="M24 78 Q32 84 40 78" fill="none" stroke="#241833" stroke-width="2.5" stroke-linecap="round"/>
+          <ellipse cx="148" cy="78" rx="10" ry="5" fill="#e2c07a"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+  <p class="still"><span data-i18n="stepsStill">Still a gap</span> <strong id="gap-fraction">1/1</strong></p>
+  <section class="bar-wrap" aria-labelledby="bar-label">
+    <div class="count-main">
+      <h2 id="bar-label" data-i18n="stepsBar">One bar</h2>
+      <strong id="step-count">0</strong>
+      <span data-i18n="stepsCount">Steps</span>
+    </div>
+    <div id="bar" class="bar"></div>
+  </section>
+  <div class="actions">
+    <button type="button" id="step" class="text-button is-ready"><span data-i18n="stepsTap">Step</span></button>
+    <button type="button" id="auto" class="text-button" aria-pressed="false"><span data-i18n="stepsAuto">Auto</span></button>
+    <button type="button" id="undo" class="text-button is-dim" aria-disabled="true"><span data-i18n="undo">Undo</span></button>
+    <button type="button" id="reset" class="text-button"><span data-i18n="reset">Reset</span></button>
+  </div>
 </main>
 <footer>
   <span data-i18n="footer">For curious children.</span>
-  <span><a href="index.html" data-i18n="replay">See the loop</a> · <a href="https://github.com/RobertBoettcherSF/godel-escher-bach" data-i18n="repository">Repository</a></span>
+  <span><a href="gallery.html" data-i18n="back">Back</a> · <a href="index.html" data-i18n="replay">See the loop</a> · <a href="https://github.com/RobertBoettcherSF/godel-escher-bach" data-i18n="repository">Repository</a></span>
 </footer>
 <aside id="debug" hidden>
   <p><span data-i18n="dbgVersion">Version</span> <span id="dbg-version"></span></p>
   <p><span data-i18n="dbgWasm">WebAssembly</span> <span id="dbg-wasm"></span></p>
+  <p><span data-i18n="dbgSteps">Steps</span> <span id="dbg-steps"></span></p>
+  <p><span data-i18n="dbgGap">Gap</span> <span id="dbg-gap"></span></p>
   <p><span data-i18n="dbgString">String</span> <span id="dbg-string"></span></p>
   <p><span data-i18n="dbgPath">Path</span> <span id="dbg-path"></span></p>
   <p><span data-i18n="dbgError">Error</span> <span id="dbg-error"></span></p>

@@ -9,6 +9,7 @@ wasm:
 native:
 	gprbuild -P tests/smoke.gpr
 	./obj/native/smoke
+	./obj/native/steps_smoke
 
 test: native wasm
 	npm test

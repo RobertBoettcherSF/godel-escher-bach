@@ -38,6 +38,32 @@ export function toggleMuted() {
   return muted;
 }
 
+export function playRise(step) {
+  if (muted) return false;
+  const freq = 196 * 2 ** (Math.min(Math.max(step, 1), 24) / 12);
+  const AC = globalThis.AudioContext || globalThis.webkitAudioContext;
+  if (!AC) return true;
+  try {
+    if (!context) context = new AC();
+    if (context.state === "suspended") context.resume().catch(() => {});
+    const start = context.currentTime;
+    const osc = context.createOscillator();
+    const gain = context.createGain();
+    osc.type = "sine";
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.0001, start);
+    gain.gain.exponentialRampToValueAtTime(0.045, start + 0.012);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.16);
+    osc.connect(gain);
+    gain.connect(context.destination);
+    osc.start(start);
+    osc.stop(start + 0.18);
+  } catch {
+    /* autoplay limits */
+  }
+  return true;
+}
+
 export function play(name, rule) {
   const tone = tones[name];
   if (!tone || muted) return false;

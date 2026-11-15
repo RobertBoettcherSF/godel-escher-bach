@@ -4,9 +4,11 @@ A browser companion to the themes of *Gödel, Escher, Bach*, one chapter at a ti
 
 **[Open the gallery](gallery.html)** when this repository is served from GitHub Pages on `main` (`https://robertboettchersf.github.io/godel-escher-bach/`). The stamp on every page matches [`version.txt`](version.txt).
 
-v0.1 opens the MIU blocks. M, I and U are coloured blocks. Four picture-buttons apply the rules. The count of I blocks is never a multiple of 3, so MU stays out of reach. The rules are Ada, compiled to `miu.wasm`. JavaScript loads that file and draws.
+v0.1 opens the MIU blocks. M, I and U are coloured blocks. Four picture-buttons apply the rules. The count of I blocks is never a multiple of 3, so MU stays out of reach. The rules are Ada, compiled to `miu.wasm`.
 
-English (UK), German, Spanish and French. Seven further chapters are drawn as closed tiles.
+v0.2 opens the endless steps. A runner closes half the remaining gap on every tap, and the steps are coloured blocks in one bar. That arithmetic is Ada, compiled to `steps.wasm`. JavaScript only draws.
+
+English (UK), German, Spanish and French. Six further chapters are drawn as closed tiles.
 
 ## Run locally
 
@@ -19,8 +21,8 @@ Open http://localhost:8000. F9 shows the version, whether `miu.wasm` loaded, the
 ## Checks
 
 ```sh
-gprbuild -P tests/smoke.gpr && ./obj/native/smoke
+gprbuild -P tests/smoke.gpr && ./obj/native/smoke && ./obj/native/steps_smoke
 npm test
 ```
 
-The Ada test searches every string reachable from MI up to length 12. See [docs/BUILD.md](docs/BUILD.md) to rebuild the wasm, and [docs/WORKFLOW.md](docs/WORKFLOW.md) for the stamp.
+The MIU test searches every string reachable from MI up to length 12. The steps test checks that after n steps the gap is 1/2ⁿ and the sum stays below 1. See [docs/BUILD.md](docs/BUILD.md) to rebuild the wasm, and [docs/WORKFLOW.md](docs/WORKFLOW.md) for the stamp.

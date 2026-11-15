@@ -1,6 +1,6 @@
 # Workflow
 
-GitHub Pages serves the root of `main`. There is no build on the server. `miu.wasm` is already in the repository.
+GitHub Pages serves the root of `main`. There is no build on the server. `miu.wasm` and `steps.wasm` are already in the repository.
 
 ## Change a rule or a page
 
@@ -8,14 +8,14 @@ GitHub Pages serves the root of `main`. There is no build on the server. `miu.wa
 2. `gprbuild -P tests/smoke.gpr && ./obj/native/smoke`
 3. `./build.sh` if Ada changed, then `npm test`
 4. Open the pages with `python3 -m http.server` and try a phone width and a wide window.
-5. Commit the source, including a rebuilt `miu.wasm` when the Ada changed.
+5. Commit the source, including a rebuilt wasm file when the Ada changed.
 6. Stamp, then commit the stamp:
 
 ```sh
 ./tools/stamp.sh
 ```
 
-The stamp is `v0.1 bYYYYMMDD-HHMM <shortcommit>`. The clock is Europe/Berlin. The short commit is HEAD at the moment of stamping, so it names the source commit and the stamp commit comes next. `version.txt` and every `<span class="version">` carry the same line.
+The stamp is `v0.2 bYYYYMMDD-HHMM <shortcommit>`. The clock is Europe/Berlin. The short commit is HEAD at the moment of stamping, so it names the source commit and the stamp commit comes next. `version.txt` and every `<span class="version">` carry the same line.
 
 ## Words
 
@@ -23,7 +23,7 @@ Visible copy is in `i18n.js` for en-GB (the `en` key), de, es and fr. The Englis
 
 ## F9
 
-F9 opens a small overlay: version, WebAssembly status, current string, history length, last status. It is for checking a page, not part of the game.
+F9 opens a small overlay: version, WebAssembly status, current string, history length, last status. On the steps page it also shows the step count and the gap. It is for checking a page, not part of the game.
 
 ## Sound and language
 

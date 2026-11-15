@@ -192,7 +192,7 @@ h2 { font-size: 1.05rem; margin: 0; }
   font-weight: 700;
   color: var(--i);
 }
-.actions { display: flex; gap: 10px; justify-content: center; }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
 .text-button { min-width: 112px; border-radius: 16px; font-weight: 700; }
 .text-button.is-dim { opacity: 0.45; }
 
@@ -324,6 +324,45 @@ footer {
 .tile h2 { min-width: 0; }
 .hint-line { font-weight: 700; letter-spacing: 0.04em; }
 
+.race {
+  background: linear-gradient(#fffdf8, #ffe8c4);
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  overflow: hidden;
+}
+.lane { position: relative; height: 168px; }
+.ground {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 22px;
+  height: 6px;
+  border-radius: 6px;
+  background: #e7d3b0;
+}
+.runner, .tortoise { position: absolute; bottom: 10px; }
+.runner { left: 0; width: 72px; z-index: 1; transition: left 0.5s cubic-bezier(.2, .8, .2, 1); }
+.runner svg, .tortoise svg { display: block; width: 100%; height: auto; }
+.tortoise { right: 4px; width: min(38vw, 176px); }
+.still { font-weight: 700; text-align: center; }
+.bar-wrap { margin-top: 8px; }
+.bar {
+  display: flex;
+  height: 44px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #efe7da;
+  border: 1px solid var(--line);
+}
+.crumb { flex: 0 1 auto; min-width: 0; height: 100%; }
+.crumb.c0 { background: var(--m); }
+.crumb.c1 { background: var(--i); }
+.crumb.c2 { background: var(--u); }
+.crumb.rest {
+  background: repeating-linear-gradient(90deg, #f7f1e7, #f7f1e7 7px, #e7d7bc 7px, #e7d7bc 9px);
+}
+#step.is-ready { box-shadow: 0 0 0 3px var(--glow); }
+
 @keyframes pop {
   from { transform: scale(0.2); opacity: 0; }
   to { transform: none; opacity: 1; }
@@ -342,6 +381,13 @@ footer {
 }
 @media (min-width: 900px) {
   .stage { grid-template-columns: 1fr 300px; align-items: center; }
+  .lane { height: 200px; }
+  .tortoise { width: 190px; }
+}
+@media (max-width: 520px) {
+  .lane { height: 132px; }
+  .runner { width: 56px; }
+  .text-button { min-width: 0; flex: 1 1 42%; }
 }
 @media (max-width: 640px) {
   .language-name { 
