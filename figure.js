@@ -12,12 +12,17 @@ const BIRD = [
   "C 2,78 8,46 36,58",
   "C 18,32 34,8 62,28",
   "C 96,8 118,30 124,62",
-  "C 136,18 186,-16 228,18",
-  "C 252,38 214,74 176,66",
-  "C 214,46 258,28 300,48",
-  "C 336,22 378,30 412,58",
-  "C 376,74 338,90 304,82",
-  "C 276,108 256,138 236,156",
+  "C 132,16 152,-46 174,4",
+  "C 180,22 168,44 194,36",
+  "C 204,4 218,-50 238,2",
+  "C 246,24 230,46 254,36",
+  "C 264,2 278,-44 300,6",
+  "C 308,24 296,50 318,64",
+  "C 336,52 352,62 368,74",
+  "C 420,62 468,72 500,90",
+  "C 462,104 410,112 368,104",
+  "C 348,100 324,112 300,120",
+  "C 270,140 250,152 236,156",
   "C 220,148 200,132 188,150",
   "C 176,130 166,100 158,102",
   "C 150,100 140,120 132,158",
@@ -45,10 +50,10 @@ const FISH = [
 ].join(" ");
 
 const PLACES = [
-  [8, 28],
-  [540, 28],
-  [8, 348],
-  [540, 348]
+  [0, 36],
+  [530, 36],
+  [0, 352],
+  [530, 352]
 ];
 
 let engine = null;
@@ -107,7 +112,7 @@ function add(parent, name, attrs) {
 
 function buildPicture() {
   const svg = document.getElementById("picture");
-  svg.setAttribute("viewBox", "-16 -8 1100 660");
+  svg.setAttribute("viewBox", "-8 -8 1076 700");
   svg.replaceChildren();
   const filter = document.createElementNS(NS, "filter");
   filter.id = "animal-glow";
@@ -118,13 +123,23 @@ function buildPicture() {
   add(filter, "feGaussianBlur", {stdDeviation: "5", in: "SourceGraphic"});
   const defs = document.createElementNS(NS, "defs");
   defs.appendChild(filter);
+  const shade = document.createElementNS(NS, "linearGradient");
+  shade.id = "bill-shade";
+  shade.setAttribute("x1", "0");
+  shade.setAttribute("y1", "0");
+  shade.setAttribute("x2", "0");
+  shade.setAttribute("y2", "1");
+  add(shade, "stop", {offset: "0", "stop-color": "#c45a08"});
+  add(shade, "stop", {offset: "0.55", "stop-color": "#e8831a"});
+  add(shade, "stop", {offset: "1", "stop-color": "#f2b56a"});
+  defs.appendChild(shade);
   svg.appendChild(defs);
 
   PLACES.forEach(([x, y], place) => {
     [0, 1].forEach((part) => {
       const shape = place * 2 + part;
       const placed = document.createElementNS(NS, "g");
-      placed.setAttribute("transform", `translate(${x} ${y})`);
+      placed.setAttribute("transform", `translate(${x} ${y}) translate(250 145) scale(1.18) translate(-250 -145)`);
       const group = document.createElementNS(NS, "g");
       group.dataset.shape = String(shape);
       group.classList.add("animal");
@@ -145,17 +160,16 @@ function buildPicture() {
       });
       add(group, "path", {class: "body", d: outline});
       if (part === 0) {
-        add(group, "path", {
-          class: "mark",
-          d: "M 158,44 C 188,12 222,22 198,54"
-        });
-        add(group, "circle", {class: "eye-ring", cx: "292", cy: "66", r: "16"});
-        add(group, "circle", {class: "eye-white", cx: "292", cy: "66", r: "9"});
-        add(group, "circle", {class: "pupil", cx: "297", cy: "66", r: "4.5"});
-        add(group, "polygon", {
-          class: "beak",
-          points: "318,56 396,72 320,88"
-        });
+        add(group, "path", {class: "mark", d: "M 166,32 L 164,-24"});
+        add(group, "path", {class: "mark", d: "M 228,30 L 230,-28"});
+        add(group, "path", {class: "mark", d: "M 288,32 L 292,-22"});
+        add(group, "path", {class: "bill-upper", d: "M 336,78 C 352,66 368,74 368,74 C 420,62 468,72 500,90 C 470,100 410,108 368,104 C 352,100 334,90 336,78 Z"});
+        add(group, "path", {class: "bill-lower", d: "M 368,104 C 410,112 452,108 478,98 C 440,118 390,124 356,114 C 344,108 356,104 368,104 Z"});
+        add(group, "path", {class: "bill-mouth", d: "M 364,102 C 410,108 450,104 484,96"});
+        add(group, "path", {class: "bill-shine", d: "M 400,78 C 440,72 470,78 492,86"});
+        add(group, "circle", {class: "eye-ring", cx: "348", cy: "86", r: "14"});
+        add(group, "circle", {class: "eye-white", cx: "348", cy: "86", r: "7.5"});
+        add(group, "circle", {class: "pupil", cx: "354", cy: "86", r: "3.4"});
       } else {
         add(group, "path", {
           class: "mark",
@@ -191,6 +205,11 @@ function paint(st, wiggle) {
       mark.setAttribute("stroke-width", "5");
       mark.setAttribute("stroke-linecap", "round");
     });
+    if (shape === 1) {
+      const field = inkColour(ink);
+      svg.style.background = field;
+      svg.closest(".picture-frame").style.background = field;
+    }
     const found = st.found === 1 && st.last === shape;
     group.classList.toggle("found", found);
     const name = t(st.kind[shape] === 0 ? "figBirds" : "figFish");

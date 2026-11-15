@@ -325,12 +325,12 @@ footer {
 .hint-line { font-weight: 700; letter-spacing: 0.04em; }
 
 .picture-frame {
-  background: #e7d3bc;
+  background: #fff6ea;
   border: 1px solid var(--line);
   border-radius: 28px;
   overflow: hidden;
 }
-#picture { width: 100%; height: auto; display: block; touch-action: manipulation; background: #e7d3bc; }
+#picture { width: 100%; height: auto; display: block; touch-action: manipulation; background: #fff6ea; }
 .animal { cursor: pointer; outline: none; }
 .animal .body { stroke: none; }
 .animal.gap .body {
@@ -348,10 +348,13 @@ footer {
   pointer-events: none;
 }
 .animal.found .glow { opacity: 0.9; }
-.animal .mark, .animal .beak, .animal .eye-ring, .animal .eye-white, .animal .pupil {
+.animal .mark, .animal .bill-upper, .animal .bill-lower, .animal .bill-mouth, .animal .bill-shine, .animal .eye-ring, .animal .eye-white, .animal .pupil {
   pointer-events: none;
 }
-.beak { fill: #f0a202; }
+.bill-upper { fill: url(#bill-shade); stroke: #9a3d04; stroke-width: 2.4px; stroke-linejoin: round; }
+.bill-lower { fill: #f0b56a; stroke: #9a3d04; stroke-width: 2.4px; stroke-linejoin: round; }
+.bill-mouth { fill: none; stroke: #6b320c; stroke-width: 1.6px; stroke-linecap: round; }
+.bill-shine { fill: none; stroke: #fff1d6; stroke-width: 1.4px; stroke-linecap: round; }
 .eye-ring { fill: #241833; }
 .eye-white { fill: #fff6ea; }
 .pupil { fill: #241833; }

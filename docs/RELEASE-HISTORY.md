@@ -1,5 +1,14 @@
 # Release history
 
+## v0.3.2
+
+The bill, the wing, and a full frame.
+
+- The beak is a curved upper mandible and a smaller lower one, with a thin mouth line. It joins the head, with a darker orange edge and a little shading, so it reads on a dark bird and on a pale one. The eye sits just behind the bill.
+- The wing is three pointed feathers.
+- The birds and fish meet across the frame. The ground is the fish layer’s own ink, so the mat is not a separate tan field.
+- Ada still owns the layer, the inks, the taps and undo. Two swaps restore every ink. `miu.wasm` and `steps.wasm` are unchanged.
+
 ## v0.3.1
 
 Figure and ground, drawn as animals.
