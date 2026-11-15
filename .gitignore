@@ -1,0 +1,6 @@
+toolchain/
+obj/
+*.ali
+*.o
+*.adc
+b~*

@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Coloured M, I and U blocks. Four picture rules. A counter for the I blocks.">
+<title>M I U</title>
+<link rel="icon" href="favicon.svg">
+<link rel="stylesheet" href="styles.css?v=1">
+<script type="module" src="mu.js?v=1"></script>
+</head>
+<body data-page-title="chapter1">
+<a class="skip" href="#main" data-i18n="skip">Skip to content</a>
+<header class="top">
+  <div class="topbar">
+    <a class="brand" href="gallery.html" data-i18n="brand">Strange loops</a>
+    <span class="version">v0.1 b00000000-0000 0000000</span>
+  </div>
+  <div class="toolbar">
+    <div class="language-flags" role="group" data-i18n-aria="languages" aria-label="Choose a language">
+      <button type="button" data-language="en" aria-pressed="true"><span aria-hidden="true">🇬🇧</span> <span class="language-name" data-i18n="langEn">English (UK)</span></button>
+      <button type="button" data-language="de" aria-pressed="false"><span aria-hidden="true">🇩🇪</span> <span class="language-name" data-i18n="langDe">German</span></button>
+      <button type="button" data-language="es" aria-pressed="false"><span aria-hidden="true">🇪🇸</span> <span class="language-name" data-i18n="langEs">Spanish</span></button>
+      <button type="button" data-language="fr" aria-pressed="false"><span aria-hidden="true">🇫🇷</span> <span class="language-name" data-i18n="langFr">French</span></button>
+    </div>
+    <button type="button" id="sound-toggle" class="tool" aria-pressed="true"><span data-i18n="soundOn">Sound on</span></button>
+  </div>
+</header>
+<main id="main">
+  <h1 data-i18n="goal">Can you make MU?</h1>
+  <p id="pick" class="pick" hidden data-i18n="pick">Tap a glowing spot</p>
+  <p id="resting" class="resting" hidden data-i18n="resting">The blocks are resting.</p>
+  <p id="live" class="visually-hidden" aria-live="polite"></p>
+  <div class="stage">
+    <div id="blocks" class="blocks" role="group" data-i18n-aria="blocks" aria-label="Blocks"></div>
+    <div class="rules" role="group" data-i18n-aria="rules" aria-label="Rules">
+      <button type="button" class="rule" data-rule="1" aria-disabled="true">
+        <svg viewBox="0 0 128 36" aria-hidden="true"><rect class="i" x="2" y="6" width="14" height="24" rx="7"/><path d="M24 18 H44" stroke="#241833" stroke-width="3"/><path d="M40 12 L50 18 L40 24" fill="#241833"/><rect class="i" x="58" y="6" width="14" height="24" rx="7"/><circle class="u" cx="100" cy="18" r="12"/></svg>
+        <span data-i18n="rule1">Add U</span>
+      </button>
+      <button type="button" class="rule" data-rule="2" aria-disabled="true">
+        <svg viewBox="0 0 128 36" aria-hidden="true"><rect class="m" x="2" y="8" width="16" height="20" rx="4"/><rect class="i" x="22" y="10" width="10" height="16" rx="5"/><path d="M40 18 H54" stroke="#241833" stroke-width="3"/><path d="M50 12 L60 18 L50 24" fill="#241833"/><rect class="m" x="66" y="8" width="14" height="20" rx="4"/><rect class="i" x="84" y="10" width="8" height="16" rx="4"/><rect class="i" x="96" y="10" width="8" height="16" rx="4"/></svg>
+        <span data-i18n="rule2">Double</span>
+      </button>
+      <button type="button" class="rule" data-rule="3" aria-disabled="true">
+        <svg viewBox="0 0 128 36" aria-hidden="true"><rect class="i" x="0" y="6" width="12" height="24" rx="6"/><rect class="i" x="16" y="6" width="12" height="24" rx="6"/><rect class="i" x="32" y="6" width="12" height="24" rx="6"/><path d="M52 18 H70" stroke="#241833" stroke-width="3"/><path d="M66 12 L76 18 L66 24" fill="#241833"/><circle class="u" cx="104" cy="18" r="12"/></svg>
+        <span data-i18n="rule3">I I I to U</span>
+      </button>
+      <button type="button" class="rule" data-rule="4" aria-disabled="true">
+        <svg viewBox="0 0 128 36" aria-hidden="true"><circle class="u" cx="16" cy="18" r="12"/><circle class="u" cx="44" cy="18" r="12"/><path d="M64 18 H82" stroke="#241833" stroke-width="3"/><path d="M78 12 L88 18 L78 24" fill="#241833"/><circle cx="108" cy="12" r="3" fill="#241833"/><circle cx="118" cy="22" r="2" fill="#241833"/><circle cx="100" cy="24" r="2" fill="#241833"/></svg>
+        <span data-i18n="rule4">U U away</span>
+      </button>
+    </div>
+  </div>
+  <div class="actions">
+    <button type="button" id="undo" class="text-button is-dim" aria-disabled="true"><span data-i18n="undo">Undo</span></button>
+    <button type="button" id="reset" class="text-button"><span data-i18n="reset">Reset</span></button>
+  </div>
+  <section class="counter" aria-labelledby="count-label">
+    <div class="count-main">
+      <span class="mini i" aria-hidden="true">I</span>
+      <strong id="icount">0</strong>
+      <span id="count-label" data-i18n="counter">I blocks</span>
+    </div>
+    <div id="idots" class="dots" aria-hidden="true"></div>
+    <button type="button" id="hint" class="text-button" aria-expanded="false" aria-controls="hint-body">
+      <span aria-hidden="true">✦ </span><span data-i18n="hint">A secret</span>
+    </button>
+    <p id="hint-body" hidden>
+      <span data-i18n="hint1">The I blocks are never 3, 6, 9…</span>
+      <span data-i18n="hint2">MU has 0, so it stays away.</span>
+    </p>
+  </section>
+  <section class="trail" aria-labelledby="path-label">
+    <h2 id="path-label" data-i18n="history">Path</h2>
+    <div id="trail" class="trail-row"></div>
+  </section>
+</main>
+<footer>
+  <span data-i18n="footer">For curious children.</span>
+  <span><a href="gallery.html" data-i18n="back">Back</a> · <a href="index.html" data-i18n="replay">See the loop</a> · <a href="https://github.com/RobertBoettcherSF/godel-escher-bach" data-i18n="repository">Repository</a></span>
+</footer>
+<aside id="debug" hidden>
+  <p><span data-i18n="dbgVersion">Version</span> <span id="dbg-version"></span></p>
+  <p><span data-i18n="dbgWasm">WebAssembly</span> <span id="dbg-wasm"></span></p>
+  <p><span data-i18n="dbgString">String</span> <span id="dbg-string"></span></p>
+  <p><span data-i18n="dbgPath">Path</span> <span id="dbg-path"></span></p>
+  <p><span data-i18n="dbgError">Error</span> <span id="dbg-error"></span></p>
+</aside>
+<noscript><p>This page needs JavaScript to move the blocks.</p></noscript>
+</body>
+</html>

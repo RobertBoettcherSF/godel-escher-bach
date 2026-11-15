@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Chapter gallery. The MIU blocks are open. The other chapters are still being drawn.">
+<title>Chapters</title>
+<link rel="icon" href="favicon.svg">
+<link rel="stylesheet" href="styles.css?v=1">
+<script type="module" src="gallery.js?v=1"></script>
+</head>
+<body data-page-title="galleryEyebrow">
+<a class="skip" href="#main" data-i18n="skip">Skip to content</a>
+<header class="top">
+  <div class="topbar">
+    <a class="brand" href="gallery.html" data-i18n="brand">Strange loops</a>
+    <span class="version">v0.1 b00000000-0000 0000000</span>
+  </div>
+  <div class="toolbar">
+    <div class="language-flags" role="group" data-i18n-aria="languages" aria-label="Choose a language">
+      <button type="button" data-language="en" aria-pressed="true"><span aria-hidden="true">🇬🇧</span> <span class="language-name" data-i18n="langEn">English (UK)</span></button>
+      <button type="button" data-language="de" aria-pressed="false"><span aria-hidden="true">🇩🇪</span> <span class="language-name" data-i18n="langDe">German</span></button>
+      <button type="button" data-language="es" aria-pressed="false"><span aria-hidden="true">🇪🇸</span> <span class="language-name" data-i18n="langEs">Spanish</span></button>
+      <button type="button" data-language="fr" aria-pressed="false"><span aria-hidden="true">🇫🇷</span> <span class="language-name" data-i18n="langFr">French</span></button>
+    </div>
+    <button type="button" id="sound-toggle" class="tool" aria-pressed="true"><span data-i18n="soundOn">Sound on</span></button>
+  </div>
+</header>
+<main id="main">
+  <p class="eyebrow" data-i18n="choose">Pick one</p>
+  <h1 id="chapters-heading" data-i18n="galleryEyebrow">Chapters</h1>
+  <p data-i18n="galleryLead">One is open.</p>
+  <nav class="tiles" aria-labelledby="chapters-heading">
+    <a class="tile open" href="mu.html">
+      <svg class="mark" viewBox="0 0 72 56" aria-hidden="true"><rect x="2" y="10" width="18" height="36" rx="6" fill="#e23b4a"/><rect x="26" y="8" width="14" height="40" rx="7" fill="#2c6bed"/><circle cx="56" cy="28" r="14" fill="#f0a202"/></svg>
+      <h2 data-i18n="chapter1">M I U</h2>
+      <span class="badge" data-i18n="play">Play</span>
+    </a>
+    <a class="tile locked" href="endless-steps.html">
+      <svg class="mark" viewBox="0 0 72 56" aria-hidden="true"><path d="M6 46 H22 V34 H38 V22 H54 V10 H68" fill="none" stroke="#241833" stroke-width="4" stroke-linejoin="round"/><circle cx="14" cy="40" r="3" fill="#e23b4a"/></svg>
+      <h2 data-i18n="chapter2">Endless steps</h2>
+      <span class="badge"><span aria-hidden="true">🔒 </span><span data-i18n="locked">Soon</span></span>
+    </a>
+    <a class="tile locked" href="figure-ground.html">
+      <svg class="mark" viewBox="0 0 72 56" aria-hidden="true"><rect x="8" y="8" width="28" height="40" rx="6" fill="#241833"/><rect x="36" y="8" width="28" height="40" rx="6" fill="#fff6ea" stroke="#241833" stroke-width="3"/></svg>
+      <h2 data-i18n="chapter3">Figure and ground</h2>
+      <span class="badge"><span aria-hidden="true">🔒 </span><span data-i18n="locked">Soon</span></span>
+    </a>
+    <a class="tile locked" href="nesting.html">
+      <svg class="mark" viewBox="0 0 72 56" aria-hidden="true"><rect x="8" y="6" width="56" height="44" rx="8" fill="none" stroke="#2c6bed" stroke-width="3"/><rect x="18" y="14" width="36" height="28" rx="6" fill="none" stroke="#e23b4a" stroke-width="3"/><rect x="28" y="22" width="16" height="12" rx="3" fill="#f0a202"/></svg>
+      <h2 data-i18n="chapter4">Nesting</h2>
+      <span class="badge"><span aria-hidden="true">🔒 </span><span data-i18n="locked">Soon</span></span>
+    </a>
+    <a class="tile locked" href="crab-canon.html">
+      <svg class="mark" viewBox="0 0 72 56" aria-hidden="true"><path d="M8 18 H40 M40 18 L32 12 M40 18 L32 24" fill="none" stroke="#241833" stroke-width="3" stroke-linecap="round"/><path d="M64 38 H32 M32 38 L40 32 M32 38 L40 44" fill="none" stroke="#e23b4a" stroke-width="3" stroke-linecap="round"/></svg>
+      <h2 data-i18n="chapter5">Crab canon</h2>
+      <span class="badge"><span aria-hidden="true">🔒 </span><span data-i18n="locked">Soon</span></span>
+    </a>
+    <a class="tile locked" href="ant-fugue.html">
+      <svg class="mark" viewBox="0 0 72 56" aria-hidden="true"><path d="M6 40 Q36 4 66 40" fill="none" stroke="#241833" stroke-width="3"/><circle cx="18" cy="32" r="4" fill="#2c6bed"/><circle cx="36" cy="18" r="4" fill="#e23b4a"/><circle cx="54" cy="32" r="4" fill="#f0a202"/></svg>
+      <h2 data-i18n="chapter6">Ant fugue</h2>
+      <span class="badge"><span aria-hidden="true">🔒 </span><span data-i18n="locked">Soon</span></span>
+    </a>
+    <a class="tile locked" href="bloop-floop.html">
+      <svg class="mark" viewBox="0 0 72 56" aria-hidden="true"><circle cx="24" cy="28" r="14" fill="none" stroke="#2c6bed" stroke-width="4"/><circle cx="50" cy="28" r="10" fill="none" stroke="#f0a202" stroke-width="4"/></svg>
+      <h2 data-i18n="chapter7">BlooP and FlooP</h2>
+      <span class="badge"><span aria-hidden="true">🔒 </span><span data-i18n="locked">Soon</span></span>
+    </a>
+    <a class="tile locked" href="self-ref.html">
+      <svg class="mark" viewBox="0 0 72 56" aria-hidden="true"><path d="M22 42 A16 16 0 1 1 50 28" fill="none" stroke="#241833" stroke-width="4"/><path d="M50 28 L42 24 M50 28 L46 36" fill="none" stroke="#241833" stroke-width="4" stroke-linecap="round"/></svg>
+      <h2 data-i18n="chapter8">A line about itself</h2>
+      <span class="badge"><span aria-hidden="true">🔒 </span><span data-i18n="locked">Soon</span></span>
+    </a>
+  </nav>
+</main>
+<footer>
+  <span data-i18n="footer">For curious children.</span>
+  <span><a href="index.html" data-i18n="replay">See the loop</a> · <a href="https://github.com/RobertBoettcherSF/godel-escher-bach" data-i18n="repository">Repository</a></span>
+</footer>
+<aside id="debug" hidden>
+  <p><span data-i18n="dbgVersion">Version</span> <span id="dbg-version"></span></p>
+  <p><span data-i18n="dbgWasm">WebAssembly</span> <span id="dbg-wasm"></span></p>
+  <p><span data-i18n="dbgString">String</span> <span id="dbg-string"></span></p>
+  <p><span data-i18n="dbgPath">Path</span> <span id="dbg-path"></span></p>
+  <p><span data-i18n="dbgError">Error</span> <span id="dbg-error"></span></p>
+</aside>
+<noscript><p>This page needs JavaScript to move the blocks.</p></noscript>
+</body>
+</html>

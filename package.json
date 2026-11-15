@@ -1,0 +1,8 @@
+{
+  "name": "godel-escher-bach",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/wasm-smoke.mjs tests/i18n-smoke.mjs"
+  }
+}

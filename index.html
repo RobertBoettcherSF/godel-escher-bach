@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="A strange loop drawn slowly, then a gallery of chapters.">
+<title>A strange loop</title>
+<link rel="icon" href="favicon.svg">
+<link rel="stylesheet" href="styles.css?v=1">
+<script type="module" src="splash.js?v=1"></script>
+</head>
+<body class="splash-body" data-page-title="splashTitle">
+<a class="skip" href="#main" data-i18n="skip">Skip to content</a>
+<canvas id="loop" aria-hidden="true"></canvas>
+<header class="top">
+  <div class="topbar">
+    <a class="brand" href="gallery.html" data-i18n="brand">Strange loops</a>
+    <span class="version">v0.1 b00000000-0000 0000000</span>
+  </div>
+  <div class="toolbar">
+    <div class="language-flags" role="group" data-i18n-aria="languages" aria-label="Choose a language">
+      <button type="button" data-language="en" aria-pressed="true"><span aria-hidden="true">🇬🇧</span> <span class="language-name" data-i18n="langEn">English (UK)</span></button>
+      <button type="button" data-language="de" aria-pressed="false"><span aria-hidden="true">🇩🇪</span> <span class="language-name" data-i18n="langDe">German</span></button>
+      <button type="button" data-language="es" aria-pressed="false"><span aria-hidden="true">🇪🇸</span> <span class="language-name" data-i18n="langEs">Spanish</span></button>
+      <button type="button" data-language="fr" aria-pressed="false"><span aria-hidden="true">🇫🇷</span> <span class="language-name" data-i18n="langFr">French</span></button>
+    </div>
+    <button type="button" id="sound-toggle" class="tool" aria-pressed="true"><span data-i18n="soundOn">Sound on</span></button>
+  </div>
+</header>
+<a class="enter" id="main" href="gallery.html">
+  <h1 data-i18n="splashTitle">A strange loop</h1>
+  <p data-i18n="splashLead">Lines that come back.</p>
+  <p class="hint-line" data-i18n="splashHint">Tap to begin</p>
+</a>
+<footer>
+  <span data-i18n="footer">For curious children.</span>
+  <span><a href="gallery.html" data-i18n="galleryEyebrow">Chapters</a> · <a href="https://github.com/RobertBoettcherSF/godel-escher-bach" data-i18n="repository">Repository</a></span>
+</footer>
+<aside id="debug" hidden>
+  <p><span data-i18n="dbgVersion">Version</span> <span id="dbg-version"></span></p>
+  <p><span data-i18n="dbgWasm">WebAssembly</span> <span id="dbg-wasm"></span></p>
+  <p><span data-i18n="dbgString">String</span> <span id="dbg-string"></span></p>
+  <p><span data-i18n="dbgPath">Path</span> <span id="dbg-path"></span></p>
+  <p><span data-i18n="dbgError">Error</span> <span id="dbg-error"></span></p>
+</aside>
+<noscript><p>This page needs JavaScript to move the blocks.</p></noscript>
+</body>
+</html>
