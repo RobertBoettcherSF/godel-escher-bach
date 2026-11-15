@@ -4,46 +4,51 @@ import {play, playChime} from "./sounds.js?v=1";
 
 const NS = "http://www.w3.org/2000/svg";
 
-// One bird and the fish tucked under its belly. The belly cubics are repeated,
-// reversed, as the fish's back, so the two outlines share that curve.
+// One bird and the fish under its belly. The four shared cubics are stored
+// once and reversed, so the bird's belly and the fish's back are the same curve.
 const BIRD = [
-  "M 72,146",
-  "C 28,162 4,128 24,108",
-  "C 2,92 10,64 40,74",
-  "C 62,36 108,16 148,42",
-  "C 168,8 196,-28 214,8",
-  "C 232,42 220,74 242,82",
-  "C 262,52 308,46 328,70",
-  "C 362,58 404,82 368,102",
-  "C 340,118 312,124 286,130",
-  "C 250,168 214,188 190,160",
-  "C 175,118 158,116 146,158",
-  "C 112,188 78,162 72,146",
-  "Z",
-  "M 168,72 C 188,8 255,-18 232,58 C 220,82 182,88 168,72 Z"
+  "M 52,150",
+  "C 18,140 2,112 20,92",
+  "C 2,78 8,46 36,58",
+  "C 18,32 34,8 62,28",
+  "C 96,8 118,30 124,62",
+  "C 136,18 186,-16 228,18",
+  "C 252,38 214,74 176,66",
+  "C 214,46 258,28 300,48",
+  "C 336,22 378,30 412,58",
+  "C 376,74 338,90 304,82",
+  "C 276,108 256,138 236,156",
+  "C 220,148 200,132 188,150",
+  "C 176,130 166,100 158,102",
+  "C 150,100 140,120 132,158",
+  "C 108,176 78,168 52,150",
+  "Z"
 ].join(" ");
 
 const FISH = [
-  "M 72,146",
-  "C 78,162 112,188 146,158",
-  "C 158,116 175,118 190,160",
-  "C 214,188 250,168 286,130",
-  "C 340,150 410,168 436,206",
-  "C 392,214 430,246 384,226",
-  "C 310,258 200,250 120,236",
-  "C 48,222 4,196 18,166",
-  "C 28,144 48,142 72,146",
-  "Z",
-  "M 412,172 L 520,118 L 438,188 Z",
-  "M 414,198 L 524,262 L 436,210 Z",
-  "M 155,160 L 196,96 L 232,164 Z"
+  "M 16,188",
+  "C 4,170 22,152 52,150",
+  "C 78,168 108,176 132,158",
+  "C 140,120 150,100 158,102",
+  "C 166,100 176,130 188,150",
+  "C 200,132 220,148 236,156",
+  "C 268,162 300,170 322,186",
+  "C 352,156 424,132 492,156",
+  "C 444,172 392,184 356,188",
+  "C 400,206 456,258 504,232",
+  "C 452,274 372,252 330,220",
+  "C 300,200 260,214 220,226",
+  "C 186,236 158,276 124,250",
+  "C 100,232 78,238 58,220",
+  "C 40,206 26,200 16,188",
+  "Z"
 ].join(" ");
 
 const PLACES = [
-  [8, 40],
-  [520, 40],
-  [260, 290],
-  [772, 290]
+  [8, 28],
+  [540, 28],
+  [8, 348],
+  [540, 348]
 ];
 
 let engine = null;
@@ -102,14 +107,14 @@ function add(parent, name, attrs) {
 
 function buildPicture() {
   const svg = document.getElementById("picture");
-  svg.setAttribute("viewBox", "-20 -40 1400 700");
+  svg.setAttribute("viewBox", "-16 -8 1100 660");
   svg.replaceChildren();
   const filter = document.createElementNS(NS, "filter");
   filter.id = "animal-glow";
-  filter.setAttribute("x", "-20%");
-  filter.setAttribute("y", "-20%");
-  filter.setAttribute("width", "140%");
-  filter.setAttribute("height", "140%");
+  filter.setAttribute("x", "-40%");
+  filter.setAttribute("y", "-40%");
+  filter.setAttribute("width", "180%");
+  filter.setAttribute("height", "180%");
   add(filter, "feGaussianBlur", {stdDeviation: "5", in: "SourceGraphic"});
   const defs = document.createElementNS(NS, "defs");
   defs.appendChild(filter);
@@ -118,12 +123,13 @@ function buildPicture() {
   PLACES.forEach(([x, y], place) => {
     [0, 1].forEach((part) => {
       const shape = place * 2 + part;
+      const placed = document.createElementNS(NS, "g");
+      placed.setAttribute("transform", `translate(${x} ${y})`);
       const group = document.createElementNS(NS, "g");
       group.dataset.shape = String(shape);
       group.classList.add("animal");
       group.setAttribute("role", "button");
       group.tabIndex = 0;
-      group.setAttribute("transform", `translate(${x} ${y})`);
       group.addEventListener("click", () => onTap(shape));
       group.addEventListener("keydown", (event) => {
         if (event.key === "Enter" || event.key === " ") {
@@ -141,29 +147,26 @@ function buildPicture() {
       if (part === 0) {
         add(group, "path", {
           class: "mark",
-          d: "M 175,70 C 198,18 236,16 220,72"
+          d: "M 158,44 C 188,12 222,22 198,54"
         });
-        add(group, "path", {
-          class: "mark",
-          d: "M 36,96 C 16,82 22,66 44,76"
-        });
-        add(group, "circle", {class: "eye-ring", cx: "322", cy: "78", r: "16"});
-        add(group, "circle", {class: "eye-white", cx: "322", cy: "78", r: "10"});
-        add(group, "circle", {class: "pupil", cx: "327", cy: "78", r: "4.5"});
+        add(group, "circle", {class: "eye-ring", cx: "292", cy: "66", r: "16"});
+        add(group, "circle", {class: "eye-white", cx: "292", cy: "66", r: "9"});
+        add(group, "circle", {class: "pupil", cx: "297", cy: "66", r: "4.5"});
         add(group, "polygon", {
           class: "beak",
-          points: "340,70 408,90 344,108"
+          points: "318,56 396,72 320,88"
         });
       } else {
         add(group, "path", {
           class: "mark",
-          d: "M 168,150 C 176,128 196,130 188,156"
+          d: "M 150,224 C 142,252 118,250 126,226"
         });
-        add(group, "circle", {class: "eye-ring", cx: "58", cy: "176", r: "15"});
-        add(group, "circle", {class: "eye-white", cx: "58", cy: "176", r: "9"});
-        add(group, "circle", {class: "pupil", cx: "53", cy: "176", r: "4"});
+        add(group, "circle", {class: "eye-ring", cx: "46", cy: "178", r: "14"});
+        add(group, "circle", {class: "eye-white", cx: "46", cy: "178", r: "8"});
+        add(group, "circle", {class: "pupil", cx: "41", cy: "178", r: "3.5"});
       }
-      svg.appendChild(group);
+      placed.appendChild(group);
+      svg.appendChild(placed);
     });
   });
   built = true;
@@ -179,7 +182,9 @@ function paint(st, wiggle) {
     const ink = st.ink[shape];
     const fill = inkColour(ink);
     const line = ink > 140 ? "#fff6ea" : "#241833";
-    group.querySelector(".body").setAttribute("fill", fill);
+    const body = group.querySelector(".body");
+    body.setAttribute("fill", fill);
+    group.classList.toggle("gap", ink < 90);
     group.querySelectorAll(".mark").forEach((mark) => {
       mark.setAttribute("fill", "none");
       mark.setAttribute("stroke", line);

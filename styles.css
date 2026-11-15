@@ -333,6 +333,12 @@ footer {
 #picture { width: 100%; height: auto; display: block; touch-action: manipulation; background: #e7d3bc; }
 .animal { cursor: pointer; outline: none; }
 .animal .body { stroke: none; }
+.animal.gap .body {
+  stroke: #241833;
+  stroke-width: 3.5px;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
 .animal .glow {
   fill: none;
   stroke: #7eb6ff;
