@@ -3,58 +3,8 @@ import {t} from "./i18n.js?v=1";
 import {play, playChime} from "./sounds.js?v=1";
 
 const NS = "http://www.w3.org/2000/svg";
-
-// One bird and the fish under its belly. The four shared cubics are stored
-// once and reversed, so the bird's belly and the fish's back are the same curve.
-const BIRD = [
-  "M 52,150",
-  "C 18,140 2,112 20,92",
-  "C 2,78 8,46 36,58",
-  "C 18,32 34,8 62,28",
-  "C 96,8 118,30 124,62",
-  "C 132,16 152,-46 174,4",
-  "C 180,22 168,44 194,36",
-  "C 204,4 218,-50 238,2",
-  "C 246,24 230,46 254,36",
-  "C 264,2 278,-44 300,6",
-  "C 308,24 296,50 318,64",
-  "C 336,52 352,62 368,74",
-  "C 420,62 468,72 500,90",
-  "C 462,104 410,112 368,104",
-  "C 348,100 324,112 300,120",
-  "C 270,140 250,152 236,156",
-  "C 220,148 200,132 188,150",
-  "C 176,130 166,100 158,102",
-  "C 150,100 140,120 132,158",
-  "C 108,176 78,168 52,150",
-  "Z"
-].join(" ");
-
-const FISH = [
-  "M 16,188",
-  "C 4,170 22,152 52,150",
-  "C 78,168 108,176 132,158",
-  "C 140,120 150,100 158,102",
-  "C 166,100 176,130 188,150",
-  "C 200,132 220,148 236,156",
-  "C 268,162 300,170 322,186",
-  "C 352,156 424,132 492,156",
-  "C 444,172 392,184 356,188",
-  "C 400,206 456,258 504,232",
-  "C 452,274 372,252 330,220",
-  "C 300,200 260,214 220,226",
-  "C 186,236 158,276 124,250",
-  "C 100,232 78,238 58,220",
-  "C 40,206 26,200 16,188",
-  "Z"
-].join(" ");
-
-const PLACES = [
-  [0, 36],
-  [530, 36],
-  [0, 352],
-  [530, 352]
-];
+const VIEW_W = 1000;
+const VIEW_H = 640;
 
 let engine = null;
 let wasmBytes = 0;
@@ -66,7 +16,10 @@ let lastFront = null;
 function read() {
   const shapes = engine.figure_shapes();
   const memory = engine.memory.buffer;
-  const meta = new Int32Array(memory, engine.figure_meta() >>> 0, 8);
+  const meta = new Int32Array(memory, engine.figure_meta() >>> 0, 9);
+  const counts = new Int32Array(memory, engine.figure_outline_count() >>> 0, shapes);
+  const stride = engine.figure_outline_stride();
+  const xy = new Float32Array(memory, engine.figure_outline_xy() >>> 0, shapes * stride);
   return {
     shapes,
     blend: meta[0],
@@ -76,22 +29,58 @@ function read() {
     found: meta[4],
     error: meta[5],
     last: meta[7],
+    grow: meta[8],
     layer: new Int32Array(memory, engine.figure_shape_layer() >>> 0, shapes),
     kind: new Int32Array(memory, engine.figure_shape_kind() >>> 0, shapes),
-    ink: new Int32Array(memory, engine.figure_shape_ink() >>> 0, shapes)
+    ink: new Int32Array(memory, engine.figure_shape_ink() >>> 0, shapes),
+    counts,
+    stride,
+    xy
   };
 }
 
-function inkColour(ink) {
-  const mix = ink / 255;
-  const r = Math.round(255 + (36 - 255) * mix);
-  const g = Math.round(246 + (24 - 246) * mix);
-  const b = Math.round(234 + (51 - 234) * mix);
-  return `rgb(${r} ${g} ${b})`;
+function pointsOf(st, shape) {
+  const pts = [];
+  const base = shape * st.stride;
+  const count = st.counts[shape];
+  for (let i = 0; i < count; i += 1) {
+    pts.push({x: st.xy[base + i * 2], y: st.xy[base + i * 2 + 1]});
+  }
+  return pts;
+}
+
+function pathOf(pts) {
+  let d = "";
+  for (let i = 0; i < pts.length; i += 1) {
+    d += `${i === 0 ? "M" : "L"}${pts[i].x.toFixed(2)},${pts[i].y.toFixed(2)}`;
+  }
+  return `${d}Z`;
+}
+
+function marks(pts, right) {
+  let cx = 0;
+  let cy = 0;
+  let nose = pts[0];
+  for (const p of pts) {
+    cx += p.x;
+    cy += p.y;
+    if (right ? p.x > nose.x : p.x < nose.x) nose = p;
+  }
+  cx /= pts.length;
+  cy /= pts.length;
+  const sign = right ? 1 : -1;
+  const reach = Math.abs(nose.x - cx);
+  return {
+    eye: {x: cx + sign * reach * 0.55, y: cy + 26},
+    x1: cx + sign * reach * 0.08,
+    y1: cy + 30,
+    x2: cx + sign * reach * 0.18,
+    y2: cy + 42
+  };
 }
 
 function publish(st) {
-  const layer = st ? t(st.front === 0 ? "figBirds" : "figFish") : "—";
+  const layer = st ? t(st.front === 0 ? "figDark" : "figLight") : "—";
   window.GEB.state = {
     wasm: `${t(wasmKey)}${wasmBytes ? " · " + wasmBytes : ""}`,
     string: layer,
@@ -110,10 +99,11 @@ function add(parent, name, attrs) {
   return node;
 }
 
-function buildPicture() {
+function buildPicture(st) {
   const svg = document.getElementById("picture");
-  svg.setAttribute("viewBox", "-8 -8 1076 700");
+  svg.setAttribute("viewBox", `0 0 ${VIEW_W} ${VIEW_H}`);
   svg.replaceChildren();
+  const defs = document.createElementNS(NS, "defs");
   const filter = document.createElementNS(NS, "filter");
   filter.id = "animal-glow";
   filter.setAttribute("x", "-40%");
@@ -121,99 +111,90 @@ function buildPicture() {
   filter.setAttribute("width", "180%");
   filter.setAttribute("height", "180%");
   add(filter, "feGaussianBlur", {stdDeviation: "5", in: "SourceGraphic"});
-  const defs = document.createElementNS(NS, "defs");
   defs.appendChild(filter);
-  const shade = document.createElementNS(NS, "linearGradient");
-  shade.id = "bill-shade";
-  shade.setAttribute("x1", "0");
-  shade.setAttribute("y1", "0");
-  shade.setAttribute("x2", "0");
-  shade.setAttribute("y2", "1");
-  add(shade, "stop", {offset: "0", "stop-color": "#c45a08"});
-  add(shade, "stop", {offset: "0.55", "stop-color": "#e8831a"});
-  add(shade, "stop", {offset: "1", "stop-color": "#f2b56a"});
-  defs.appendChild(shade);
+  const clip = document.createElementNS(NS, "clipPath");
+  clip.id = "window-clip";
+  add(clip, "rect", {x: "0", y: "0", width: String(VIEW_W), height: String(VIEW_H)});
+  defs.appendChild(clip);
   svg.appendChild(defs);
 
-  PLACES.forEach(([x, y], place) => {
-    [0, 1].forEach((part) => {
-      const shape = place * 2 + part;
-      const placed = document.createElementNS(NS, "g");
-      placed.setAttribute("transform", `translate(${x} ${y}) translate(250 145) scale(1.18) translate(-250 -145)`);
-      const group = document.createElementNS(NS, "g");
-      group.dataset.shape = String(shape);
-      group.classList.add("animal");
-      group.setAttribute("role", "button");
-      group.tabIndex = 0;
-      group.addEventListener("click", () => onTap(shape));
-      group.addEventListener("keydown", (event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          onTap(shape);
-        }
-      });
-      const outline = part === 0 ? BIRD : FISH;
-      add(group, "path", {
-        class: "glow",
-        d: outline,
-        filter: "url(#animal-glow)"
-      });
-      add(group, "path", {class: "body", d: outline});
-      if (part === 0) {
-        add(group, "path", {class: "mark", d: "M 166,32 L 164,-24"});
-        add(group, "path", {class: "mark", d: "M 228,30 L 230,-28"});
-        add(group, "path", {class: "mark", d: "M 288,32 L 292,-22"});
-        add(group, "path", {class: "bill-upper", d: "M 336,78 C 352,66 368,74 368,74 C 420,62 468,72 500,90 C 470,100 410,108 368,104 C 352,100 334,90 336,78 Z"});
-        add(group, "path", {class: "bill-lower", d: "M 368,104 C 410,112 452,108 478,98 C 440,118 390,124 356,114 C 344,108 356,104 368,104 Z"});
-        add(group, "path", {class: "bill-mouth", d: "M 364,102 C 410,108 450,104 484,96"});
-        add(group, "path", {class: "bill-shine", d: "M 400,78 C 440,72 470,78 492,86"});
-        add(group, "circle", {class: "eye-ring", cx: "348", cy: "86", r: "14"});
-        add(group, "circle", {class: "eye-white", cx: "348", cy: "86", r: "7.5"});
-        add(group, "circle", {class: "pupil", cx: "354", cy: "86", r: "3.4"});
-      } else {
-        add(group, "path", {
-          class: "mark",
-          d: "M 150,224 C 142,252 118,250 126,226"
-        });
-        add(group, "circle", {class: "eye-ring", cx: "46", cy: "178", r: "14"});
-        add(group, "circle", {class: "eye-white", cx: "46", cy: "178", r: "8"});
-        add(group, "circle", {class: "pupil", cx: "41", cy: "178", r: "3.5"});
+  const window = document.createElementNS(NS, "g");
+  window.setAttribute("clip-path", "url(#window-clip)");
+  const world = document.createElementNS(NS, "g");
+  world.setAttribute("transform", `translate(0 ${VIEW_H}) scale(1 -1)`);
+  window.appendChild(world);
+  svg.appendChild(window);
+
+  const order = [];
+  for (let shape = 0; shape < st.shapes; shape += 1) {
+    if (st.layer[shape] !== st.front) order.push(shape);
+  }
+  for (let shape = 0; shape < st.shapes; shape += 1) {
+    if (st.layer[shape] === st.front) order.push(shape);
+  }
+
+  for (const shape of order) {
+    const pts = pointsOf(st, shape);
+    const right = st.layer[shape] === 0;
+    const detail = marks(pts, right);
+    const group = document.createElementNS(NS, "g");
+    group.dataset.shape = String(shape);
+    group.classList.add("animal", right ? "dark" : "light");
+    group.setAttribute("role", "button");
+    group.tabIndex = 0;
+    group.addEventListener("click", () => onTap(shape));
+    group.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        onTap(shape);
       }
-      placed.appendChild(group);
-      svg.appendChild(placed);
     });
-  });
+    add(group, "path", {class: "glow", d: pathOf(pts), filter: "url(#animal-glow)"});
+    add(group, "path", {class: "body", d: pathOf(pts)});
+    add(group, "line", {
+      class: "feather",
+      x1: detail.x1,
+      y1: detail.y1,
+      x2: detail.x2,
+      y2: detail.y2
+    });
+    add(group, "circle", {class: "eye-ring", cx: detail.eye.x, cy: detail.eye.y, r: "11"});
+    add(group, "circle", {class: "eye-white", cx: detail.eye.x + (right ? 1 : -1), cy: detail.eye.y, r: "6.2"});
+    add(group, "circle", {class: "pupil", cx: detail.eye.x + (right ? 3.2 : -3.2), cy: detail.eye.y, r: "3.1"});
+    world.appendChild(group);
+  }
   built = true;
 }
 
 function paint(st, wiggle) {
   const svg = document.getElementById("picture");
-  if (!built) buildPicture();
+  if (!built) buildPicture(st);
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const showMarks = st.grow >= 28;
   for (let shape = 0; shape < st.shapes; shape += 1) {
     const group = svg.querySelector(`g[data-shape="${shape}"]`);
     if (!group) continue;
-    const ink = st.ink[shape];
-    const fill = inkColour(ink);
-    const line = ink > 140 ? "#fff6ea" : "#241833";
+    const dark = st.layer[shape] === 0;
+    const front = st.layer[shape] === st.front;
     const body = group.querySelector(".body");
-    body.setAttribute("fill", fill);
-    group.classList.toggle("gap", ink < 90);
-    group.querySelectorAll(".mark").forEach((mark) => {
-      mark.setAttribute("fill", "none");
-      mark.setAttribute("stroke", line);
-      mark.setAttribute("stroke-width", "5");
-      mark.setAttribute("stroke-linecap", "round");
-    });
-    if (shape === 1) {
-      const field = inkColour(ink);
-      svg.style.background = field;
-      svg.closest(".picture-frame").style.background = field;
-    }
+    body.setAttribute("fill", dark ? "#201830" : "#fffaf2");
+    group.classList.toggle("front", front);
     const found = st.found === 1 && st.last === shape;
     group.classList.toggle("found", found);
-    const name = t(st.kind[shape] === 0 ? "figBirds" : "figFish");
-    group.setAttribute("aria-label", name);
+    group.querySelector(".feather").style.display = showMarks ? "" : "none";
+    group.querySelectorAll(".eye-ring, .eye-white, .pupil").forEach((node) => {
+      node.style.display = showMarks ? "" : "none";
+    });
+    const scale = (st.grow / 100) * (front ? 1 : 0.62);
+    const eye = group.querySelector(".eye-ring");
+    const white = group.querySelector(".eye-white");
+    const pupil = group.querySelector(".pupil");
+    const feather = group.querySelector(".feather");
+    eye.setAttribute("r", String(11 * scale));
+    white.setAttribute("r", String(6.2 * scale));
+    pupil.setAttribute("r", String(3.1 * scale));
+    feather.setAttribute("stroke-width", front ? "4.5" : "2.4");
+    group.setAttribute("aria-label", t(dark ? "figDark" : "figLight"));
     if (wiggle && !reduced && st.layer[shape] === st.front) {
       group.classList.remove("wiggle");
       void group.getBoundingClientRect();
@@ -229,15 +210,23 @@ function render(options = {}) {
   }
   const st = read();
   publish(st);
+  const svg = document.getElementById("picture");
+  const previous = svg.dataset.grow;
+  if (!built || previous !== String(st.grow) || svg.dataset.front !== String(st.front)) {
+    built = false;
+    buildPicture(st);
+    svg.dataset.grow = String(st.grow);
+    svg.dataset.front = String(st.front);
+  }
   paint(st, Boolean(options.wiggle) && st.front !== lastFront);
   lastFront = st.front;
-  const fade = document.getElementById("fade");
-  if (document.activeElement !== fade) fade.value = String(st.blend);
+  const grow = document.getElementById("grow");
+  if (document.activeElement !== grow) grow.value = String(st.grow);
   const find = document.getElementById("find");
   const key = st.found === 1 ? "figFound" : "figFind";
   find.dataset.i18n = key;
   find.textContent = t(key);
-  document.getElementById("who").textContent = t(st.front === 0 ? "figBirds" : "figFish");
+  document.getElementById("who").textContent = t(st.front === 0 ? "figDark" : "figLight");
   const resting = document.getElementById("resting");
   if (resting) resting.hidden = true;
 }
@@ -266,7 +255,7 @@ function showFailure(error) {
 async function boot() {
   publish(null);
   try {
-    const response = await fetch("figure.wasm?v=31");
+    const response = await fetch("figure.wasm?v=34");
     if (!response.ok) throw new Error(`figure.wasm ${response.status}`);
     const bytes = await response.arrayBuffer();
     wasmBytes = bytes.byteLength;
@@ -281,9 +270,9 @@ async function boot() {
   }
 }
 
-document.getElementById("fade").addEventListener("input", (event) => {
+document.getElementById("grow").addEventListener("input", (event) => {
   if (!engine) return;
-  engine.figure_blend(Number(event.target.value));
+  engine.figure_grow(Number(event.target.value));
   render();
 });
 document.getElementById("undo").addEventListener("click", () => {
@@ -291,7 +280,7 @@ document.getElementById("undo").addEventListener("click", () => {
   const before = read();
   engine.figure_undo();
   const after = read();
-  if (after.error !== 0 && after.taps === before.taps && after.blend === before.blend) play("no");
+  if (after.error !== 0 && after.taps === before.taps && after.blend === before.blend && after.grow === before.grow) play("no");
   else play("undo");
   render({wiggle: true});
 });

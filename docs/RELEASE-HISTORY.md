@@ -1,5 +1,13 @@
 # Release history
 
+## v0.3.4
+
+One bird, and the same bird mirrored.
+
+- The frame is a window onto a triangle lattice. At grow 0 the tiles are plain triangles. At grow 100 each tile is a bird: round eye, short beak, wing and tail.
+- Dark birds fly right. The gaps are the same outline mirrored, in cream, flying left. Every slanted edge is shared. Two swaps restore the inks.
+- Ada computes the curves and the outlines. The native test checks that the birds cover the frame once, that the light outline is the mirror of the dark one, and that a second swap restores the picture. `miu.wasm` and `steps.wasm` are unchanged.
+
 ## v0.3.2
 
 The bill, the wing, and a full frame.

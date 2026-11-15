@@ -56,5 +56,7 @@ if [ "$want" = "all" ] || [ "$want" = "figure" ]; then
   compile_module figure src/figure.adb \
     --export=figure_shapes --export=figure_meta \
     --export=figure_shape_layer --export=figure_shape_kind --export=figure_shape_ink \
-    --export=figure_reset --export=figure_blend --export=figure_tap --export=figure_undo
+    --export=figure_outline_count --export=figure_outline_xy --export=figure_outline_stride \
+    --export=figure_reset --export=figure_blend --export=figure_grow \
+    --export=figure_tap --export=figure_undo
 fi

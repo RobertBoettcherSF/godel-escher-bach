@@ -8,7 +8,7 @@ v0.1 opens the MIU blocks. M, I and U are coloured blocks. Four picture-buttons 
 
 v0.2 opens the endless steps. A runner closes half the remaining gap on every tap, and the steps are coloured blocks in one bar. That arithmetic is Ada, compiled to `steps.wasm`.
 
-v0.3 opens figure and ground. v0.3.2 draws each bird and each fish as one smooth outline, with a two-part bill and a feathered wing. The layers, inks, taps and undo are Ada, compiled to `figure.wasm`. JavaScript only draws.
+v0.3 opens figure and ground. v0.3.4 fills the frame with one bird and its mirror: dark birds fly right, light birds fly left, and a slider grows them from plain triangles. The outlines, layers, inks, taps and undo are Ada, compiled to `figure.wasm`. JavaScript only draws.
 
 English (UK), German, Spanish and French. Five further chapters are drawn as closed tiles.
 
@@ -27,4 +27,4 @@ gprbuild -P tests/smoke.gpr && ./obj/native/smoke && ./obj/native/steps_smoke &&
 npm test
 ```
 
-The MIU test searches every string reachable from MI up to length 12. The steps test checks that after n steps the gap is 1/2ⁿ and the sum stays below 1. The figure test checks that every cell belongs to one layer and that two swaps restore the picture. See [docs/BUILD.md](docs/BUILD.md) to rebuild the wasm, and [docs/WORKFLOW.md](docs/WORKFLOW.md) for the stamp.
+The MIU test searches every string reachable from MI up to length 12. The steps test checks that after n steps the gap is 1/2ⁿ and the sum stays below 1. The figure test checks that dark and light birds cover the frame once, that the light bird is the mirror of the dark one, and that two swaps restore the picture. See [docs/BUILD.md](docs/BUILD.md) to rebuild the wasm, and [docs/WORKFLOW.md](docs/WORKFLOW.md) for the stamp.

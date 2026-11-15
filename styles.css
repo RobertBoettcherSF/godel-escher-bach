@@ -332,13 +332,10 @@ footer {
 }
 #picture { width: 100%; height: auto; display: block; touch-action: manipulation; background: #fff6ea; }
 .animal { cursor: pointer; outline: none; }
-.animal .body { stroke: none; }
-.animal.gap .body {
-  stroke: #241833;
-  stroke-width: 3.5px;
-  stroke-linejoin: round;
-  stroke-linecap: round;
-}
+.animal .body { stroke: none; stroke-linejoin: round; }
+.animal .feather { fill: none; stroke-linecap: round; pointer-events: none; }
+.animal.dark .feather { stroke: #fff6ea; }
+.animal.light .feather { stroke: #201830; }
 .animal .glow {
   fill: none;
   stroke: #7eb6ff;

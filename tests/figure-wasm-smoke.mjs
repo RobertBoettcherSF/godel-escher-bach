@@ -9,7 +9,7 @@ const e = instance.exports;
 function read() {
   const shapes = e.figure_shapes();
   const memory = e.memory.buffer;
-  const meta = new Int32Array(memory, e.figure_meta() >>> 0, 8);
+  const meta = new Int32Array(memory, e.figure_meta() >>> 0, 9);
   return {
     shapes,
     blend: meta[0],
@@ -19,6 +19,7 @@ function read() {
     found: meta[4],
     error: meta[5],
     last: meta[7],
+    grow: meta[8],
     layer: new Int32Array(memory, e.figure_shape_layer() >>> 0, shapes),
     kind: new Int32Array(memory, e.figure_shape_kind() >>> 0, shapes),
     ink: new Int32Array(memory, e.figure_shape_ink() >>> 0, shapes)
@@ -28,7 +29,8 @@ function read() {
 test("each animal is one layer, and two swaps restore the inks", () => {
   e.figure_reset();
   let st = read();
-  assert.equal(st.shapes, 8);
+  assert.ok(st.shapes >= 16 && st.shapes % 2 === 0);
+  assert.equal(st.grow, 100);
   let birds = 0;
   let fish = 0;
   for (let shape = 0; shape < st.shapes; shape += 1) {
@@ -57,4 +59,10 @@ test("each animal is one layer, and two swaps restore the inks", () => {
   st = read();
   assert.equal(st.ink[0], 255 - 63);
   assert.equal(st.ink[1], 63);
+  e.figure_grow(0);
+  st = read();
+  assert.equal(st.grow, 0);
+  assert.equal(st.blend, 25);
+  e.figure_grow(140);
+  assert.equal(read().grow, 100);
 });
