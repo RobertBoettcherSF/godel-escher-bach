@@ -1,5 +1,14 @@
 # Release history
 
+## v0.3.3
+
+A shared-edge tiling, on a branch for review.
+
+- Each tile edge is a curve, and the opposite edge is that same curve translated. A bird is on one side of every curve and a fish is on the other, so the fish is the space the birds leave.
+- Ada samples the curves, exports the outlines, and the native test checks that the tiles cover the frame and that each edge appears twice.
+- Both animals are outlined in both layers, with an eye and simple wing or fin lines. The beak is a short point inside the bird tile.
+- `miu.wasm` and `steps.wasm` are unchanged. This stamp is not on `main`.
+
 ## v0.3.2
 
 The bill, the wing, and a full frame.

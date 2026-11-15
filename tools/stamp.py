@@ -6,7 +6,7 @@ import sys
 
 root = pathlib.Path(__file__).resolve().parents[1]
 stamp = (root / "version.txt").read_text(encoding="utf-8").strip()
-if not re.fullmatch(r"v0\.3\.2 b\d{8}-\d{4} [0-9a-f]{7}", stamp):
+if not re.fullmatch(r"v0\.3\.3 b\d{8}-\d{4} [0-9a-f]{7}", stamp):
     sys.exit(f"bad stamp {stamp!r}")
 changed = 0
 for path in sorted(root.glob("*.html")):

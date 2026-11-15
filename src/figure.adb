@@ -22,6 +22,152 @@ package body Figure is
    Kind_Slot  : array (Shape_Index) of Integer := (others => 0);
    Ink_Slot   : array (Shape_Index) of Integer := (others => 0);
 
+   --  Lattice. A 2 by 2 block of rectangles. The right edge is the left edge
+   --  translated by the width, and the bottom edge is the top edge translated
+   --  by the height. Inside each rectangle one curve separates the bird from
+   --  the fish, so the fish is the space the bird does not take.
+   Cell_W    : constant := 720;
+   Cell_H    : constant := 460;
+   Samples   : constant := 32;
+   XY        : array (0 .. Shape_Count * Max_Outline * 2 - 1) of Integer :=
+     (others => 0);
+   Counts    : array (Shape_Index) of Integer := (others => 0);
+   Built     : Boolean := False;
+
+   function Tri (U, Center, Width, Height : Integer) return Integer is
+      D : constant Integer := abs (U - Center);
+   begin
+      if D >= Width then
+         return 0;
+      end if;
+      return Height * (Width - D) / Width;
+   end Tri;
+
+   function Tail_X (Y : Integer) return Integer is
+      U : constant Integer := Y * 1000 / Cell_H;
+   begin
+      return Tri (U, 420, 80, 170) + Tri (U, 580, 80, 170) - Tri (U, 500, 50, 20);
+   end Tail_X;
+
+   function Top_Y (X : Integer) return Integer is
+      U : constant Integer := X * 1000 / Cell_W;
+   begin
+      return -(Tri (U, 160, 70, 34) + Tri (U, 340, 60, 26) + Tri (U, 700, 60, 78));
+   end Top_Y;
+
+   function Mid_X (Y : Integer) return Integer is
+      U : constant Integer := Y * 1000 / Cell_H;
+   begin
+      return (Cell_W * 56) / 100 + Tri (U, 300, 60, 58) - Tri (U, 620, 140, 70);
+   end Mid_X;
+
+   procedure Add_Point (Shape : Shape_Index; X, Y : Integer) is
+      Slot : Integer;
+   begin
+      if Counts (Shape) >= Max_Outline then
+         return;
+      end if;
+      Slot := Integer (Shape) * Max_Outline * 2 + Counts (Shape) * 2;
+      XY (Slot) := X;
+      XY (Slot + 1) := Y;
+      Counts (Shape) := Counts (Shape) + 1;
+   end Add_Point;
+
+   procedure Build_Outlines is
+      type Sample_Array is array (0 .. Samples) of Integer;
+      Top_X, Top_YV, Bot_X, Bot_Y, Mid_XV, Mid_Y : Sample_Array;
+      Left_X, Left_Y, Right_X, Right_Y           : Sample_Array;
+   begin
+      for Shape in Shape_Index loop
+         Counts (Shape) := 0;
+      end loop;
+      for I in 0 .. Samples loop
+         declare
+            X : constant Integer := Cell_W * I / Samples;
+            Y : constant Integer := Cell_H * I / Samples;
+         begin
+            Top_X (I) := X;
+            Top_YV (I) := Top_Y (X);
+            Bot_X (I) := X;
+            Bot_Y (I) := Cell_H + Top_Y (X);
+            Mid_XV (I) := Mid_X (Y);
+            Mid_Y (I) := Y;
+            Left_X (I) := Tail_X (Y);
+            Left_Y (I) := Y;
+            Right_X (I) := Cell_W + Tail_X (Y);
+            Right_Y (I) := Y;
+         end;
+      end loop;
+
+      for Row in 0 .. 1 loop
+         for Col in 0 .. 1 loop
+            declare
+               Bird : constant Shape_Index := Shape_Index ((Row * 2 + Col) * 2);
+               Fish : constant Shape_Index := Shape_Index (Integer (Bird) + 1);
+               DX   : constant Integer := Col * Cell_W;
+               DY   : constant Integer := Row * Cell_H;
+               Gate : constant Integer := Mid_X (0);
+            begin
+               for I in 0 .. Samples loop
+                  if Top_X (I) <= Gate then
+                     Add_Point (Bird, Top_X (I) + DX, Top_YV (I) + DY);
+                  end if;
+                  if Top_X (I) >= Gate then
+                     Add_Point (Fish, Top_X (I) + DX, Top_YV (I) + DY);
+                  end if;
+               end loop;
+               for I in 0 .. Samples loop
+                  Add_Point (Bird, Mid_XV (I) + DX, Mid_Y (I) + DY);
+               end loop;
+               for I in reverse 0 .. Samples loop
+                  if Bot_X (I) <= Gate then
+                     Add_Point (Bird, Bot_X (I) + DX, Bot_Y (I) + DY);
+                  end if;
+               end loop;
+               for I in reverse 0 .. Samples loop
+                  Add_Point (Bird, Left_X (I) + DX, Left_Y (I) + DY);
+               end loop;
+
+               for I in 0 .. Samples loop
+                  Add_Point (Fish, Right_X (I) + DX, Right_Y (I) + DY);
+               end loop;
+               for I in reverse 0 .. Samples loop
+                  if Bot_X (I) >= Gate then
+                     Add_Point (Fish, Bot_X (I) + DX, Bot_Y (I) + DY);
+                  end if;
+               end loop;
+               for I in reverse 0 .. Samples loop
+                  Add_Point (Fish, Mid_XV (I) + DX, Mid_Y (I) + DY);
+               end loop;
+            end;
+         end loop;
+      end loop;
+      Built := True;
+   end Build_Outlines;
+
+   function Outline_Count (Shape : Shape_Index) return Integer is
+   begin
+      if not Built then
+         Build_Outlines;
+      end if;
+      return Counts (Shape);
+   end Outline_Count;
+
+   function Outline_X (Shape : Shape_Index; Index : Natural) return Integer is
+      Slot : constant Integer := Integer (Shape) * Max_Outline * 2 + Index * 2;
+   begin
+      return XY (Slot);
+   end Outline_X;
+
+   function Outline_Y (Shape : Shape_Index; Index : Natural) return Integer is
+      Slot : constant Integer := Integer (Shape) * Max_Outline * 2 + Index * 2;
+   begin
+      return XY (Slot + 1);
+   end Outline_Y;
+
+   function Outline_Count_Address return System.Address is (Counts'Address);
+   function Outline_XY_Address return System.Address is (XY'Address);
+
    function Blend return Integer is (Mix);
 
    function Front_Layer return Integer is
@@ -105,6 +251,9 @@ package body Figure is
 
    procedure Reset is
    begin
+      if not Built then
+         Build_Outlines;
+      end if;
       Mix := 0;
       Taps := 0;
       Found := 0;

@@ -8,7 +8,7 @@ v0.1 opens the MIU blocks. M, I and U are coloured blocks. Four picture-buttons 
 
 v0.2 opens the endless steps. A runner closes half the remaining gap on every tap, and the steps are coloured blocks in one bar. That arithmetic is Ada, compiled to `steps.wasm`.
 
-v0.3 opens figure and ground. v0.3.2 draws each bird and each fish as one smooth outline, with a two-part bill and a feathered wing. The layers, inks, taps and undo are Ada, compiled to `figure.wasm`. JavaScript only draws.
+v0.3 opens figure and ground. v0.3.3, on a review branch, tiles birds and fish from shared edge curves. The layers, inks, taps and undo are Ada, compiled to `figure.wasm`. JavaScript only draws.
 
 English (UK), German, Spanish and French. Five further chapters are drawn as closed tiles.
 

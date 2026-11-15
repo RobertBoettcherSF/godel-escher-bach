@@ -31,6 +31,12 @@ package Figure is
    function Shape_Kind (Shape : Shape_Index) return Integer;
    function Shape_Ink (Shape : Shape_Index) return Integer;
 
+   Max_Outline : constant := 200;
+
+   function Outline_Count (Shape : Shape_Index) return Integer;
+   function Outline_X (Shape : Shape_Index; Index : Natural) return Integer;
+   function Outline_Y (Shape : Shape_Index; Index : Natural) return Integer;
+
    function Exported_Shapes return Integer
      with Export, Convention => C, External_Name => "figure_shapes";
    function Meta_Address return System.Address
@@ -41,6 +47,10 @@ package Figure is
      with Export, Convention => C, External_Name => "figure_shape_kind";
    function Shape_Ink_Address return System.Address
      with Export, Convention => C, External_Name => "figure_shape_ink";
+   function Outline_Count_Address return System.Address
+     with Export, Convention => C, External_Name => "figure_outline_count";
+   function Outline_XY_Address return System.Address
+     with Export, Convention => C, External_Name => "figure_outline_xy";
 
    procedure Reset_Exported
      with Export, Convention => C, External_Name => "figure_reset";
