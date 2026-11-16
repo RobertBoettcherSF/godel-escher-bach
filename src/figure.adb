@@ -58,7 +58,7 @@ package body Figure is
    Max_Eyes : constant := 800;
 
    Morph    : Boolean     := True;
-   Stage    : Integer     := 0;
+   Stage    : Integer     := 50;
    Lit      : Integer     := 0;
    Taps     : Integer     := 0;
    Which    : Integer     := -1;
@@ -127,12 +127,11 @@ package body Figure is
      ((Float (I) + Float (J) * 0.5, Float (J) * H));
 
    function Stage_At (Y : Float) return Float is
-      S, U : Float;
+      S, U, Shift : Float;
    begin
-      if not Morph then
-         return Float (Stage) / 100.0;
-      end if;
-      S := Y / (Float (Rows) * H);
+      --  Slider 50 is the reference morph. 0 shifts it to triangles, 100 to birds.
+      Shift := (Float (Stage) - 50.0) / 50.0;
+      S := Y / (Float (Rows) * H) + Shift;
       U := (S - 0.12) / 0.70;
       if U < 0.0 then
          U := 0.0;
@@ -366,7 +365,7 @@ package body Figure is
    procedure Reset is
    begin
       Morph := True;
-      Stage := 0;
+      Stage := 50;
       Lit := 0;
       Taps := 0;
       Which := -1;
@@ -381,7 +380,6 @@ package body Figure is
       if Morph then
          Remember;
       end if;
-      Morph := False;
       if Value < 0 then
          Stage := 0;
       elsif Value > 100 then
@@ -389,6 +387,7 @@ package body Figure is
       else
          Stage := Value;
       end if;
+      Morph := Stage = 50;
       Err := Ok;
       Refresh;
    end Set_Uniform;

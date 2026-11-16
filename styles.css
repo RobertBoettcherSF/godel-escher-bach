@@ -330,7 +330,7 @@ footer {
   border-radius: 28px;
   overflow: hidden;
 }
-#picture { width: 100%; height: auto; display: block; touch-action: manipulation; background: #e2d0ba; }
+#picture { width: 100%; height: auto; display: block; touch-action: manipulation; background: #e2d0ba; overflow: hidden; }
 .bird { cursor: pointer; }
 .bird .halo { opacity: 0; pointer-events: none; }
 .bird.lit .halo { animation: bird-pulse 1.15s ease-in-out infinite; }
@@ -371,12 +371,13 @@ footer {
 .pupil { fill: #241833; }
 .fade {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: 32px 1fr 32px;
   gap: 12px;
   align-items: center;
   margin: 14px 0;
   font-weight: 700;
 }
+.mark-icon { width: 32px; height: 24px; display: block; }
 .fade input { width: 100%; accent-color: var(--ink); min-height: 44px; }
 @keyframes wiggle {
   0%, 100% { transform: translateY(0); }

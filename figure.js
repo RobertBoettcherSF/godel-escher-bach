@@ -4,10 +4,13 @@ import {play, playChime} from "./sounds.js?v=1";
 
 const DARK = "#211a33";
 const CREAM = "#fdf5e8";
-const MIN_X = -11.8;
-const MAX_X = 14.25;
-const MIN_Y = -1.2;
-const MAX_Y = 9.2;
+const ROW_H = 9 * Math.sqrt(3) / 2;
+const narrow = window.matchMedia("(max-width: 520px)");
+
+function frame() {
+  const width = narrow.matches ? 4 : 7;
+  return {x: (7 - width) / 2, y: 0, w: width, h: ROW_H};
+}
 
 const svg = document.getElementById("picture");
 const who = document.getElementById("who");
@@ -82,12 +85,16 @@ function ensure(count) {
 }
 
 function paintEyes(state) {
+  const box = frame();
   eyes.replaceChildren();
   for (let i = 0; i < state.eyes; i += 1) {
+    const x = state.eyeXY[i * 2];
+    const y = state.eyeXY[i * 2 + 1];
+    if (x < box.x || x > box.x + box.w || y < box.y || y > box.y + box.h) continue;
     const dark = state.eyeKind[i] === 0;
     const eye = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-    eye.setAttribute("cx", state.eyeXY[i * 2].toFixed(3));
-    eye.setAttribute("cy", state.eyeXY[i * 2 + 1].toFixed(3));
+    eye.setAttribute("cx", x.toFixed(3));
+    eye.setAttribute("cy", y.toFixed(3));
     eye.setAttribute("r", "0.018");
     eye.setAttribute("fill", dark ? CREAM : DARK);
     const pupil = document.createElementNS("http://www.w3.org/2000/svg", "circle");
@@ -119,9 +126,9 @@ function show(state) {
   paintEyes(state);
   if (state.highlight === 1) who.textContent = t("figDark");
   else if (state.highlight === 2) who.textContent = t("figLight");
-  else if (state.morph) who.textContent = t("figGrowing");
-  else if (state.uniform === 0) who.textContent = t("figFlat");
-  else who.textContent = t("figBirds");
+  else if (state.uniform <= 0) who.textContent = t("figFlat");
+  else if (state.uniform >= 100) who.textContent = t("figBirds");
+  else who.textContent = t("figGrowing");
   window.GEB.state = {
     wasm: "ok",
     layer: state.morph ? "growing" : String(state.uniform),
@@ -137,9 +144,15 @@ function draw() {
   show(read());
 }
 
-svg.setAttribute("viewBox", `${MIN_X} ${-MAX_Y} ${MAX_X - MIN_X} ${MAX_Y - MIN_Y}`);
+function applyFrame() {
+  const box = frame();
+  svg.setAttribute("viewBox", `${box.x} ${-(box.y + box.h)} ${box.w} ${box.h}`);
+}
+
+applyFrame();
 world.setAttribute("transform", "scale(1,-1)");
 svg.append(world);
+narrow.addEventListener("change", applyFrame);
 
 svg.addEventListener("click", (event) => {
   const group = event.target.closest?.(".bird");
@@ -156,17 +169,9 @@ slider?.addEventListener("input", () => {
   draw();
 });
 
-document.getElementById("undo")?.addEventListener("click", () => {
-  wasm?.exports.figure_undo();
-  play("undo");
-  const state = read();
-  if (!state.morph) slider.value = String(state.uniform);
-  show(state);
-});
-
 document.getElementById("reset")?.addEventListener("click", () => {
   wasm?.exports.figure_reset();
-  if (slider) slider.value = "0";
+  if (slider) slider.value = "50";
   play("reset");
   draw();
 });
@@ -175,7 +180,7 @@ window.addEventListener("languagechange", () => {
   if (wasm) draw();
 });
 
-const response = await fetch("figure.wasm?v=4");
+const response = await fetch("figure.wasm?v=5");
 const {instance} = await WebAssembly.instantiate(await response.arrayBuffer());
 wasm = instance;
 wasm.exports.figure_reset();
