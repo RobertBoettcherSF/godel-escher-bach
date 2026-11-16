@@ -17,6 +17,8 @@ GitHub Pages serves the root of `main`. There is no build on the server. `miu.wa
 
 The stamp is `v0.5.1 bYYYYMMDD-HHMM <shortcommit>`. The clock is Europe/Berlin. The short commit is HEAD at the moment of stamping, so it names the source commit and the stamp commit comes next. `version.txt` and every `<span class="version">` carry the same line.
 
+After a strict visual check (desktop and a phone width, including the interacted states), merge straight to `main` and stamp so the live pages can be tested. Do not wait for a separate screenshot approval.
+
 ## Words
 
 Visible copy is in `i18n.js` for en-GB (the `en` key), de, es and fr. The English text is also the fallback in the HTML. Do not paste sentences or pictures from the book. Draw new marks.
