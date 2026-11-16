@@ -99,7 +99,6 @@ function paintCounter(depth) {
   for (let level = start; level <= depth; level += 1) {
     const item = document.createElement("li");
     item.style.background = FRAME[(level - 1) % FRAME.length];
-    if (level === depth) item.classList.add("here");
     stack.append(item);
   }
   levelN.textContent = String(depth);

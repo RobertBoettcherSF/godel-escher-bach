@@ -402,9 +402,7 @@ footer {
   display: flex;
   flex-direction: row;
   justify-content: flex-end;
-  gap: 6px;
-  max-width: 150px;
-  overflow: hidden;
+  gap: 8px;
 }
 .level-stack li {
   width: 22px;
@@ -412,7 +410,6 @@ footer {
   border-radius: 999px;
   flex: none;
 }
-.level-stack li.here { outline: 2px solid #241833; outline-offset: 2px; }
 #level-n {
   min-width: 2.4em;
   padding: 2px 8px;
