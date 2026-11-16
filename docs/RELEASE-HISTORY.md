@@ -1,5 +1,13 @@
 # Release history
 
+## v0.6.3
+
+One written line, read from both ends.
+
+- Both staves show the same eight notes. The lower staff stays red, with an arrow pointing back.
+- At each step the upper marker walks left to right and the lower marker walks right to left. The lower voice sounds the pitch at the other end, so the canon is unchanged. The markers cross in the middle, then wrap. Reduced motion jumps to those notes.
+- A tap on either staff changes that one written note, and both staves show it.
+
 ## v0.6.2
 
 Play keeps going, and the notes that are sounding light up.

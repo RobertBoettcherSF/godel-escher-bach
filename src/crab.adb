@@ -147,11 +147,23 @@ package body Crab is
    function Play_Column (Voice : Natural; Beat : Natural) return Integer is
       Slot : constant Natural := Beat mod Max_Notes;
    begin
-      if Voice > 1 then
+      if Voice = 0 then
+         return Integer (Slot);
+      elsif Voice = 1 then
+         return Integer (Max_Notes - 1 - Slot);
+      else
          return -1;
       end if;
-      return Integer (Slot);
    end Play_Column;
+
+   function Sounding_Pitch (Voice : Natural; Beat : Natural) return Natural is
+      Col : constant Integer := Play_Column (Voice, Beat);
+   begin
+      if Col < 0 then
+         return 0;
+      end if;
+      return Note (Natural (Col));
+   end Sounding_Pitch;
 
    procedure Publish is
       Source, Back : Melody;
