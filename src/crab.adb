@@ -1,9 +1,20 @@
 package body Crab is
 
-   Letters : array (0 .. Max_Tiles - 1) of Integer := (others => 0);
-   Pitches : array (0 .. Max_Notes - 1) of Integer := (0, 2, 4, 5, 4, 2, 1, 0);
-   Mirrors : array (0 .. Max_Notes - 1) of Integer := (0, 1, 2, 4, 5, 4, 2, 0);
-   Meta    : array (1 .. 4) of Integer := (others => 0);
+   type Pitch_Line is array (0 .. Max_Notes - 1) of Integer;
+
+   --  Original eight-note lines, one for each starter word. 0 sits on the
+   --  bottom line. None of them reads the same backwards.
+   Catalog : constant array (0 .. Melody_Count - 1) of Pitch_Line :=
+     (0 => (0, 1, 2, 3, 4, 5, 6, 4),
+      1 => (0, 3, 6, 5, 2, 4, 1, 2),
+      2 => (1, 1, 2, 4, 6, 5, 3, 0));
+
+   Letters      : array (0 .. Max_Tiles - 1) of Integer := (others => 0);
+   Pitches      : Pitch_Line := Catalog (0);
+   Mirrors      : Pitch_Line := (4, 6, 5, 4, 3, 2, 1, 0);
+   Shown        : Natural := 0;
+   Melody_Index : Natural := 0;
+   Meta         : array (1 .. 6) of Integer := (others => 0);
 
    function Letter (Index : Natural) return Natural is
    begin
@@ -121,20 +132,37 @@ package body Crab is
       return Palindrome (Buf);
    end Is_Palindrome;
 
-   procedure Publish is
+   procedure Retrograde (Source : Melody; Result : out Melody) is
    begin
-      Meta (1) := Max_Tiles;
+      for I in Source'Range loop
+         Result (I) := Source (Max_Notes + 1 - I);
+      end loop;
+   end Retrograde;
+
+   function Shown_Length return Natural is (Shown);
+
+   procedure Publish is
+      Source, Back : Melody;
+   begin
+      Meta (1) := Integer (Shown);
       Meta (2) := (if Is_Palindrome then 1 else 0);
       Meta (3) := Max_Notes;
       Meta (4) := Pitch_Max;
-      for I in Mirrors'Range loop
-         Mirrors (I) := Pitches (Max_Notes - 1 - I);
+      Meta (5) := Melody_Count;
+      Meta (6) := Integer (Melody_Index);
+      for I in Source'Range loop
+         Source (I) := Natural (Pitches (I - 1));
+      end loop;
+      Retrograde (Source, Back);
+      for I in Back'Range loop
+         Mirrors (I - 1) := Integer (Back (I));
       end loop;
    end Publish;
 
    procedure Clear_Letters is
    begin
       Letters := (others => 0);
+      Shown := 0;
       Publish;
    end Clear_Letters;
 
@@ -147,6 +175,9 @@ package body Crab is
          Letters (Index) := 0;
       else
          Letters (Index) := Integer (Code);
+      end if;
+      if Index >= Shown then
+         Shown := Index + 1;
       end if;
       Publish;
    end Set_Letter;
@@ -183,6 +214,7 @@ package body Crab is
          Letters (Slot) := Character'Pos (C);
          Slot := Slot + 1;
       end loop;
+      Shown := Slot;
       Publish;
    end Set_Text;
 
@@ -195,11 +227,18 @@ package body Crab is
       Publish;
    end Cycle_Note;
 
+   procedure Select_Melody (Index : Natural) is
+   begin
+      Melody_Index := Index mod Melody_Count;
+      Pitches := Catalog (Melody_Index);
+      Publish;
+   end Select_Melody;
+
    procedure Reset is
    begin
       Letters := (others => 0);
-      Pitches := (0, 2, 4, 5, 4, 2, 1, 0);
-      Publish;
+      Shown := 0;
+      Select_Melody (0);
    end Reset;
 
    function Meta_Address return System.Address is (Meta'Address);
@@ -240,5 +279,14 @@ package body Crab is
       end if;
       Cycle_Note (Natural (Index));
    end Cycle_Note_Exported;
+
+   procedure Select_Melody_Exported (Index : Integer) is
+   begin
+      if Index < 0 then
+         Select_Melody (0);
+      else
+         Select_Melody (Natural (Index));
+      end if;
+   end Select_Melody_Exported;
 
 end Crab;

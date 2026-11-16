@@ -80,6 +80,49 @@ begin
    end loop;
    Check (Crab.Note (0) = 0, "pitch wraps");
 
+   Crab.Set_Text ("KAYAK");
+   Check (Crab.Shown_Length = 5, "kayak shows five tiles");
+   Crab.Set_Letter (4, 0);
+   Check (Crab.Shown_Length = 5, "a blank letter keeps its slot");
+   Crab.Set_Text ("OTTO");
+   Check (Crab.Shown_Length = 4, "otto shows four tiles");
+   Crab.Clear_Letters;
+   Check (Crab.Shown_Length = 0, "an empty row shows no tiles");
+
+   declare
+      Source : Crab.Melody;
+      Once   : Crab.Melody;
+      Twice  : Crab.Melody;
+      Saved  : array (0 .. Crab.Max_Notes - 1) of Natural;
+   begin
+      for Trial in 1 .. 60 loop
+         for I in Source'Range loop
+            Source (I) := Next_Rand mod 256;
+         end loop;
+         Crab.Retrograde (Source, Once);
+         for I in Source'Range loop
+            Check (Once (I) = Source (Crab.Max_Notes + 1 - I), "retrograde place");
+         end loop;
+         Crab.Retrograde (Once, Twice);
+         for I in Source'Range loop
+            Check (Twice (I) = Source (I), "retrograde twice");
+         end loop;
+      end loop;
+
+      Crab.Select_Melody (1);
+      for I in 0 .. Crab.Max_Notes - 1 loop
+         Check (Crab.Mirror_Note (I) = Crab.Note (Crab.Max_Notes - 1 - I),
+                "stored line is a retrograde");
+         Saved (I) := Crab.Note (I);
+      end loop;
+      Crab.Select_Melody (1 + Crab.Melody_Count);
+      for I in Saved'Range loop
+         Check (Crab.Note (I) = Saved (I), "melody index wraps");
+      end loop;
+      Crab.Select_Melody (0);
+      Check (Crab.Note (2) /= Saved (2), "the tunes are different");
+   end;
+
    for Trial in 1 .. 80 loop
       declare
          Len  : constant Natural := 1 + Next_Rand mod 20;
