@@ -1,5 +1,14 @@
 # Release history
 
+## v0.5
+
+Stories, a tree, and rabbits.
+
+- Frames sit inside frames. Deeper pushes one level and Back pops one. A stack at the side shows how far in you are. The tone rises on the way in and falls on the way out.
+- A slider grows a balanced tree from a trunk to ten splits. Ada computes every branch.
+- Next adds the next rabbit count, drawn as two coloured groups that make the new pile. It stops at 89. Reset clears the pile.
+- The rules are Ada in `recursion.wasm`. The page only draws.
+
 ## v0.4
 
 Triangles grow into birds.

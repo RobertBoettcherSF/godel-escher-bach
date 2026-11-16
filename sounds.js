@@ -92,6 +92,35 @@ export function playRise(step) {
   return true;
 }
 
+export function playFall(step) {
+  if (muted) return false;
+  const base = 196 * 2 ** (Math.min(Math.max(step, 1), 24) / 12);
+  const AC = globalThis.AudioContext || globalThis.webkitAudioContext;
+  if (!AC) return true;
+  try {
+    if (!context) context = new AC();
+    if (context.state === "suspended") context.resume().catch(() => {});
+    const start = context.currentTime;
+    [base, base / 1.26].forEach((freq, index) => {
+      const osc = context.createOscillator();
+      const gain = context.createGain();
+      const at = start + index * 0.09;
+      osc.type = "sine";
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.0001, at);
+      gain.gain.exponentialRampToValueAtTime(0.045, at + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.0001, at + 0.16);
+      osc.connect(gain);
+      gain.connect(context.destination);
+      osc.start(at);
+      osc.stop(at + 0.18);
+    });
+  } catch {
+    /* autoplay limits */
+  }
+  return true;
+}
+
 export function play(name, rule) {
   const tone = tones[name];
   if (!tone || muted) return false;

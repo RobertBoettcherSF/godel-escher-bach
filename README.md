@@ -10,7 +10,9 @@ v0.2 opens the endless steps. A runner closes half the remaining gap on every ta
 
 v0.4 turns figure and ground into a field of triangles that grow into birds. The curves, the morph and the taps live in Ada, compiled to `figure.wasm`. JavaScript only draws.
 
-English (UK), German, Spanish and French. Five further chapters are drawn as closed tiles.
+v0.5 opens recursion. Frames nest, a tree branches, and rabbit dots follow the counts. That state is Ada, compiled to `recursion.wasm`.
+
+English (UK), German, Spanish and French. Four further chapters are drawn as closed tiles.
 
 ## Run locally
 
@@ -23,7 +25,7 @@ Open http://localhost:8000. F9 shows the version, whether `miu.wasm` loaded, the
 ## Checks
 
 ```sh
-gprbuild -P tests/smoke.gpr && ./obj/native/smoke && ./obj/native/steps_smoke && ./obj/native/figure_smoke
+gprbuild -P tests/smoke.gpr && ./obj/native/smoke && ./obj/native/steps_smoke && ./obj/native/figure_smoke && ./obj/native/recursion_smoke
 npm test
 ```
 

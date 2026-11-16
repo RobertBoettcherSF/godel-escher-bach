@@ -59,3 +59,10 @@ if [ "$want" = "all" ] || [ "$want" = "figure" ]; then
     --export=figure_eye_xy --export=figure_eye_kind \
     --export=figure_reset --export=figure_uniform --export=figure_tap --export=figure_undo
 fi
+
+if [ "$want" = "all" ] || [ "$want" = "recursion" ]; then
+  compile_module recursion src/recursion.adb \
+    --export=recursion_meta --export=recursion_segments --export=recursion_dots \
+    --export=recursion_reset --export=recursion_deeper --export=recursion_back \
+    --export=recursion_tree --export=recursion_next --export=recursion_rabbits_reset
+fi
