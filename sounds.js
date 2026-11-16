@@ -149,6 +149,38 @@ export function play(name, rule) {
   return true;
 }
 
+const scale = [261.63, 293.66, 329.63, 349.23, 392.0, 440.0, 493.88];
+
+export function playDuet(forward, backward) {
+  if (muted) return false;
+  const AC = globalThis.AudioContext || globalThis.webkitAudioContext;
+  if (!AC) return true;
+  try {
+    if (!context) context = new AC();
+    if (context.state === "suspended") context.resume().catch(() => {});
+    const start = context.currentTime;
+    for (let i = 0; i < forward.length; i += 1) {
+      const at = start + i * 0.34;
+      [forward[i], backward[i]].forEach((pitch, voice) => {
+        const osc = context.createOscillator();
+        const gain = context.createGain();
+        osc.type = voice === 0 ? "sine" : "triangle";
+        osc.frequency.value = scale[Math.max(0, Math.min(6, pitch))] || 261.63;
+        gain.gain.setValueAtTime(0.0001, at);
+        gain.gain.exponentialRampToValueAtTime(0.05, at + 0.03);
+        gain.gain.exponentialRampToValueAtTime(0.0001, at + 0.3);
+        osc.connect(gain);
+        gain.connect(context.destination);
+        osc.start(at);
+        osc.stop(at + 0.32);
+      });
+    }
+  } catch {
+    /* autoplay limits */
+  }
+  return true;
+}
+
 export function bindSoundButton() {
   const button = document.getElementById("sound-toggle");
   if (!button) return;

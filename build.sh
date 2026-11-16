@@ -60,6 +60,13 @@ if [ "$want" = "all" ] || [ "$want" = "figure" ]; then
     --export=figure_reset --export=figure_uniform --export=figure_tap --export=figure_undo
 fi
 
+if [ "$want" = "all" ] || [ "$want" = "crab" ]; then
+  compile_module crab src/crab.adb \
+    --export=crab_meta --export=crab_letters --export=crab_notes --export=crab_mirrors \
+    --export=crab_reset --export=crab_clear --export=crab_set_letter \
+    --export=crab_cycle_letter --export=crab_cycle_note
+fi
+
 if [ "$want" = "all" ] || [ "$want" = "recursion" ]; then
   compile_module recursion src/recursion.adb \
     --export=recursion_meta --export=recursion_segments --export=recursion_dots \

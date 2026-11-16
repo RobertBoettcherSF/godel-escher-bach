@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="This chapter is still being drawn.">
+<meta name="description" content="The same line, forward and backward at once.">
 <title>Crab canon</title>
 <link rel="icon" href="favicon.svg">
-<link rel="stylesheet" href="styles.css?v=1">
-<script type="module" src="shell.js?v=1"></script>
+<link rel="stylesheet" href="styles.css?v=12">
+<script type="module" src="crab.js?v=1"></script>
 </head>
 <body data-page-title="chapter5">
 <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -26,16 +26,76 @@
     <button type="button" id="sound-toggle" class="tool" aria-pressed="true"><span data-i18n="soundOn">Sound on</span></button>
   </div>
 </header>
-<main id="main" class="soon-main">
-  <p class="eyebrow" data-i18n="locked">Soon</p>
-  <div class="lock" aria-hidden="true">🔒</div>
+<main id="main">
   <h1 data-i18n="chapter5">Crab canon</h1>
-  <p data-i18n="soon">Still drawing this chapter.</p>
-  <a class="back" href="gallery.html" data-i18n="back">Back</a>
+  <p class="canon-lead" data-i18n="crabLead">The same line, forward and back at once.</p>
+
+  <section class="rec-part" aria-labelledby="words-title">
+    <h2 id="words-title" data-i18n="crabWords">Words</h2>
+    <div id="letters" class="letter-row"></div>
+    <p id="canon-mark" class="canon-mark" role="status">✓</p>
+    <div class="actions">
+      <button type="button" id="another" class="text-button"><span data-i18n="crabAnother">Another</span></button>
+    </div>
+  </section>
+
+  <section class="rec-part" aria-labelledby="music-title">
+    <h2 id="music-title" data-i18n="crabMusic">Music</h2>
+    <svg id="staff" class="staff" viewBox="0 0 880 276" role="img" aria-labelledby="music-title"></svg>
+    <div class="actions">
+      <button type="button" id="play-canon" class="text-button"><span data-i18n="play">Play</span></button>
+    </div>
+  </section>
+
+  <section class="rec-part" aria-labelledby="walk-title">
+    <h2 id="walk-title" data-i18n="crabWalk">Walk</h2>
+    <div class="crab-stage">
+      <div class="crab a" aria-hidden="true">
+        <svg viewBox="0 0 140 96">
+          <g stroke="#8a3b1a" stroke-width="4" stroke-linecap="round">
+            <line x1="42" y1="50" x2="18" y2="34"/><line x1="46" y1="58" x2="16" y2="58"/><line x1="44" y1="66" x2="20" y2="78"/>
+            <line x1="98" y1="50" x2="122" y2="34"/><line x1="94" y1="58" x2="124" y2="58"/><line x1="96" y1="66" x2="120" y2="78"/>
+          </g>
+          <ellipse cx="34" cy="32" rx="16" ry="11" fill="#e07a3d"/>
+          <ellipse cx="106" cy="32" rx="16" ry="11" fill="#e07a3d"/>
+          <path d="M22 30 Q14 22 22 18" fill="none" stroke="#c4492a" stroke-width="3"/>
+          <path d="M118 30 Q126 22 118 18" fill="none" stroke="#c4492a" stroke-width="3"/>
+          <ellipse cx="70" cy="54" rx="36" ry="24" fill="#c4492a"/>
+          <ellipse cx="70" cy="50" rx="20" ry="10" fill="#e07a3d"/>
+          <line x1="56" y1="34" x2="50" y2="14" stroke="#8a3b1a" stroke-width="3"/>
+          <line x1="84" y1="34" x2="90" y2="14" stroke="#8a3b1a" stroke-width="3"/>
+          <circle cx="50" cy="12" r="7" fill="#241833"/>
+          <circle cx="90" cy="12" r="7" fill="#241833"/>
+          <circle cx="52" cy="11" r="2.2" fill="#fff6ea"/>
+          <circle cx="92" cy="11" r="2.2" fill="#fff6ea"/>
+        </svg>
+      </div>
+      <div class="crab b" aria-hidden="true">
+        <svg viewBox="0 0 140 96">
+          <g stroke="#145e66" stroke-width="4" stroke-linecap="round">
+            <line x1="42" y1="50" x2="18" y2="34"/><line x1="46" y1="58" x2="16" y2="58"/><line x1="44" y1="66" x2="20" y2="78"/>
+            <line x1="98" y1="50" x2="122" y2="34"/><line x1="94" y1="58" x2="124" y2="58"/><line x1="96" y1="66" x2="120" y2="78"/>
+          </g>
+          <ellipse cx="34" cy="32" rx="16" ry="11" fill="#3aa0ad"/>
+          <ellipse cx="106" cy="32" rx="16" ry="11" fill="#3aa0ad"/>
+          <path d="M22 30 Q14 22 22 18" fill="none" stroke="#1f7a8a" stroke-width="3"/>
+          <path d="M118 30 Q126 22 118 18" fill="none" stroke="#1f7a8a" stroke-width="3"/>
+          <ellipse cx="70" cy="54" rx="36" ry="24" fill="#1f7a8a"/>
+          <ellipse cx="70" cy="50" rx="20" ry="10" fill="#3aa0ad"/>
+          <line x1="56" y1="34" x2="50" y2="14" stroke="#145e66" stroke-width="3"/>
+          <line x1="84" y1="34" x2="90" y2="14" stroke="#145e66" stroke-width="3"/>
+          <circle cx="50" cy="12" r="7" fill="#241833"/>
+          <circle cx="90" cy="12" r="7" fill="#241833"/>
+          <circle cx="52" cy="11" r="2.2" fill="#fff6ea"/>
+          <circle cx="92" cy="11" r="2.2" fill="#fff6ea"/>
+        </svg>
+      </div>
+    </div>
+  </section>
 </main>
 <footer>
   <span data-i18n="footer">For curious children.</span>
-  <span><a href="index.html" data-i18n="replay">See the loop</a> · <a href="https://github.com/RobertBoettcherSF/godel-escher-bach" data-i18n="repository">Repository</a></span>
+  <span><a href="gallery.html" data-i18n="back">Back</a> · <a href="index.html" data-i18n="replay">See the loop</a> · <a href="https://github.com/RobertBoettcherSF/godel-escher-bach" data-i18n="repository">Repository</a></span>
 </footer>
 <aside id="debug" hidden>
   <p><span data-i18n="dbgVersion">Version</span> <span id="dbg-version"></span></p>

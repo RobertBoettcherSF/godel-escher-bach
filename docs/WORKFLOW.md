@@ -1,11 +1,11 @@
 # Workflow
 
-GitHub Pages serves the root of `main`. There is no build on the server. `miu.wasm`, `steps.wasm`, `figure.wasm` and `recursion.wasm` are already in the repository.
+GitHub Pages serves the root of `main`. There is no build on the server. `miu.wasm`, `steps.wasm`, `figure.wasm`, `recursion.wasm` and `crab.wasm` are already in the repository.
 
 ## Change a rule or a page
 
 1. Edit `src/` for the rules, or the HTML, CSS and JS for the pictures and words.
-2. `gprbuild -P tests/smoke.gpr && ./obj/native/smoke`
+2. `gprbuild -P tests/smoke.gpr && ./obj/native/smoke && ./obj/native/crab_smoke`
 3. `./build.sh` if Ada changed, then `npm test`
 4. Open the pages with `python3 -m http.server` and try a phone width and a wide window.
 5. Commit the source, including a rebuilt wasm file when the Ada changed.
@@ -15,7 +15,7 @@ GitHub Pages serves the root of `main`. There is no build on the server. `miu.wa
 ./tools/stamp.sh
 ```
 
-The stamp is `v0.5.5 bYYYYMMDD-HHMM <shortcommit>`. The clock is Europe/Berlin. The short commit is HEAD at the moment of stamping, so it names the source commit and the stamp commit comes next. `version.txt` and every `<span class="version">` carry the same line.
+The stamp is `v0.6 bYYYYMMDD-HHMM <shortcommit>`. The clock is Europe/Berlin. The short commit is HEAD at the moment of stamping, so it names the source commit and the stamp commit comes next. `version.txt` and every `<span class="version">` carry the same line.
 
 After a strict visual check (desktop and a phone width, including the interacted states), merge straight to `main` and stamp so the live pages can be tested. Do not wait for a separate screenshot approval.
 
