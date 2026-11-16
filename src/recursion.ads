@@ -5,13 +5,13 @@ with System;
 
 package Recursion is
 
-   Max_Depth   : constant := 6;
-   Max_Tree    : constant := 10;
-   Max_Terms   : constant := 11;
-   Max_Segments : constant := 2047;
-   Max_Dots    : constant := 200;
+   --  Far past any visit. Deeper saturates here instead of wrapping.
+   Depth_Ceiling : constant := 1_000_000;
+   Max_Tree      : constant := 10;
+   Max_Terms     : constant := 11;
+   Max_Segments  : constant := 2047;
+   Max_Dots      : constant := 200;
 
-   subtype Depth_Range is Natural range 1 .. Max_Depth;
    subtype Tree_Range is Natural range 0 .. Max_Tree;
 
    type Status_Kind is (Ok, At_Bottom, At_Top, Full);
@@ -24,7 +24,7 @@ package Recursion is
    procedure Next_Rabbit;
    procedure Reset_Rabbits;
 
-   function Frame_Depth return Depth_Range;
+   function Frame_Depth return Natural;
    function Tree_Depth return Tree_Range;
    function Segment_Count return Natural;
    function Segment_X1 (Index : Natural) return Integer;

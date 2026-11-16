@@ -23,7 +23,7 @@ const SUN = `<g stroke="#e39b12" stroke-width="1.6" stroke-linecap="round" fill=
   <circle cx="14" cy="14" r="6.4" fill="#f6b429" stroke="none"/>
 </g>`;
 const FLOWER = `<g>
-  <line x1="28" y1="80" x2="28" y2="58" stroke="#2f7a40" stroke-width="2.8" stroke-linecap="round"/>
+  <line x1="28" y1="58" x2="28" y2="80" stroke="#2f7a40" stroke-width="2.8" stroke-linecap="butt"/>
   <ellipse cx="20" cy="66" rx="8" ry="3.4" transform="rotate(-42 20 66)" fill="#3e9a52"/>
   <circle cx="16" cy="50" r="9" fill="#e23d4a"/>
   <circle cx="40" cy="50" r="9" fill="#e23d4a"/>
@@ -39,6 +39,7 @@ const tree = document.getElementById("tree");
 const rabbits = document.getElementById("rabbits");
 const depthInput = document.getElementById("depth");
 const depthN = document.getElementById("depth-n");
+const levelN = document.getElementById("level-n");
 const rabbitN = document.getElementById("rabbit-n");
 const deeper = document.getElementById("deeper");
 const back = document.getElementById("back");
@@ -77,20 +78,35 @@ function sceneInner(level, total) {
   return `<rect width="100" height="100" fill="${wall}"/>
     <rect x="0" y="80" width="100" height="20" fill="#e4c27a"/>
     ${SUN}${FLOWER}
-    <line x1="8" y1="80" x2="92" y2="80" stroke="#8a5a28" stroke-width="1.6" stroke-linecap="round"/>
+    <rect x="8" y="80" width="84" height="1.8" fill="#8a5a28"/>
     <rect x="${FRAME_X}" y="${FRAME_Y}" width="${FRAME_S}" height="${FRAME_S}" fill="${frame}"/>
     ${picture}`;
 }
 
-let builtLevels = 0;
+const NESTED = 4;
 let shownDepth = 0;
+let sliding = false;
 
-function ensureScenes() {
-  const count = 10;
-  if (builtLevels === count && frames.querySelector(".scene-root")) return;
-  frames.innerHTML = `<div class="story-stage"><div class="scene-cam"><svg class="scene-root" data-level="1" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${sceneInner(1, count)}</svg></div></div>`;
-  builtLevels = count;
-  shownDepth = 0;
+function paintScene(depth) {
+  const total = depth + NESTED;
+  frames.innerHTML = `<div class="story-stage"><div class="scene-cam"><svg class="scene-root" data-level="${depth}" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${sceneInner(depth, total)}</svg></div></div>`;
+  shownDepth = depth;
+}
+
+function paintCounter(depth) {
+  const start = Math.max(1, depth - 4);
+  stack.replaceChildren();
+  for (let level = start; level <= depth; level += 1) {
+    const item = document.createElement("li");
+    item.style.background = FRAME[(level - 1) % FRAME.length];
+    if (level === depth) item.classList.add("here");
+    stack.append(item);
+  }
+  levelN.textContent = String(depth);
+}
+
+function motionOff() {
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
 function zoomTransform(depth) {
@@ -108,40 +124,22 @@ function zoomTransform(depth) {
   return `translate(${tx}px, ${ty}px) scale(${scale})`;
 }
 
-function applyZoom(depth, animate) {
-  const cam = frames.querySelector(".scene-cam");
-  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const previous = cam.style.transform;
-  const next = zoomTransform(depth);
-  if (animate && !reduced && previous) {
-    cam.style.transition = "none";
-    cam.style.transform = previous;
-    cam.getBoundingClientRect();
-    cam.style.transition = "transform 0.7s ease";
-    cam.style.transform = next;
-  } else {
-    cam.style.transition = "none";
-    cam.style.transform = next;
-  }
+function remember(state) {
+  paintCounter(state.depth);
+  back.classList.toggle("is-dim", state.depth <= 1);
+  back.setAttribute("aria-disabled", state.depth <= 1 ? "true" : "false");
+  window.GEB.state = {
+    wasm: "ok",
+    string: `${state.depth} / ${state.tree} / ${state.value}`,
+    history: `${state.segments} branches`,
+    error: t("err" + state.error)
+  };
+  window.GEB.refreshDebug?.();
 }
 
 function drawFrames(state) {
-  ensureScenes();
-  stack.replaceChildren();
-  for (let level = 1; level <= state.maxDepth; level += 1) {
-    const item = document.createElement("li");
-    item.style.background = level <= state.depth ? FRAME[level - 1] : "#eadcc6";
-    if (level === state.depth) item.classList.add("here");
-    stack.append(item);
-  }
-  if (shownDepth !== state.depth) {
-    applyZoom(state.depth, shownDepth !== 0);
-    shownDepth = state.depth;
-  }
-  deeper.classList.toggle("is-dim", state.depth >= state.maxDepth);
-  deeper.setAttribute("aria-disabled", state.depth >= state.maxDepth ? "true" : "false");
-  back.classList.toggle("is-dim", state.depth <= 1);
-  back.setAttribute("aria-disabled", state.depth <= 1 ? "true" : "false");
+  remember(state);
+  if (!sliding && shownDepth !== state.depth) paintScene(state.depth);
 }
 
 function drawTree(state) {
@@ -227,36 +225,94 @@ function show(state) {
   drawFrames(state);
   drawTree(state);
   drawRabbits(state);
-  window.GEB.state = {
-    wasm: "ok",
-    string: `${state.depth} / ${state.tree} / ${state.value}`,
-    history: `${state.segments} branches`,
-    error: t("err" + state.error)
-  };
-  window.GEB.refreshDebug?.();
 }
 
 function draw() {
   show(read());
 }
 
-deeper.addEventListener("click", () => {
+function stepIn() {
+  if (sliding) return;
   const before = read().depth;
   wasm.exports.recursion_deeper();
   const state = read();
-  if (state.error === 0 && state.depth > before) playRise(state.depth);
-  else play("no");
-  show(state);
-});
+  if (!(state.error === 0 && state.depth > before)) {
+    play("no");
+    remember(state);
+    return;
+  }
+  playRise(state.depth);
+  remember(state);
+  const cam = frames.querySelector(".scene-cam");
+  const inner = frames.querySelector(`svg[data-level="${state.depth}"]`);
+  if (motionOff() || !cam || !inner) {
+    paintScene(state.depth);
+    return;
+  }
+  sliding = true;
+  const next = zoomTransform(state.depth);
+  cam.style.transition = "none";
+  cam.style.transform = "none";
+  cam.getBoundingClientRect();
+  cam.style.transition = "transform 0.55s ease";
+  cam.style.transform = next;
+  const done = (event) => {
+    if (event && event.target !== cam) return;
+    cam.removeEventListener("transitionend", done);
+    window.clearTimeout(slideTimer);
+    paintScene(state.depth);
+    sliding = false;
+  };
+  const slideTimer = window.setTimeout(done, 700);
+  cam.addEventListener("transitionend", done);
+}
 
-back.addEventListener("click", () => {
+function stepOut() {
+  if (sliding) return;
   const before = read().depth;
   wasm.exports.recursion_back();
   const state = read();
-  if (state.error === 0 && state.depth < before) playFall(before);
-  else play("no");
-  show(state);
+  if (!(state.error === 0 && state.depth < before)) {
+    play("no");
+    remember(state);
+    return;
+  }
+  playFall(before);
+  remember(state);
+  if (motionOff()) {
+    paintScene(state.depth);
+    return;
+  }
+  paintScene(state.depth);
+  const cam = frames.querySelector(".scene-cam");
+  const zoomed = zoomTransform(before);
+  sliding = true;
+  cam.style.transition = "none";
+  cam.style.transform = zoomed;
+  cam.getBoundingClientRect();
+  cam.style.transition = "transform 0.55s ease";
+  cam.style.transform = "none";
+  const done = (event) => {
+    if (event && event.target !== cam) return;
+    cam.removeEventListener("transitionend", done);
+    window.clearTimeout(slideTimer);
+    cam.style.transition = "none";
+    cam.style.transform = "none";
+    sliding = false;
+  };
+  const slideTimer = window.setTimeout(done, 700);
+  cam.addEventListener("transitionend", done);
+}
+
+deeper.addEventListener("click", stepIn);
+frames.addEventListener("click", stepIn);
+frames.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter" && event.key !== " ") return;
+  event.preventDefault();
+  stepIn();
 });
+
+back.addEventListener("click", stepOut);
 
 depthInput.addEventListener("input", () => {
   wasm.exports.recursion_tree(Number(depthInput.value));
@@ -272,8 +328,11 @@ next.addEventListener("click", () => {
 });
 
 window.addEventListener("resize", () => {
-  if (!wasm || shownDepth < 1) return;
-  applyZoom(shownDepth, false);
+  if (!wasm || sliding) return;
+  const cam = frames.querySelector(".scene-cam");
+  if (!cam) return;
+  cam.style.transition = "none";
+  cam.style.transform = "none";
 });
 
 document.getElementById("rabbit-reset").addEventListener("click", () => {
@@ -282,7 +341,7 @@ document.getElementById("rabbit-reset").addEventListener("click", () => {
   draw();
 });
 
-const response = await fetch("recursion.wasm?v=2");
+const response = await fetch("recursion.wasm?v=3");
 const {instance} = await WebAssembly.instantiate(await response.arrayBuffer());
 wasm = instance;
 wasm.exports.recursion_reset();

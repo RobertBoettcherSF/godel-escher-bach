@@ -2,7 +2,7 @@ package body Recursion is
 
    Pi : constant Float := 3.14159265;
 
-   Frame   : Depth_Range := 1;
+   Frame   : Natural := 1;
    Branches : Tree_Range := 5;
    Terms   : Natural := 0;
    Value   : Natural := 0;
@@ -26,7 +26,7 @@ package body Recursion is
    Wobble : constant array (0 .. 6) of Float :=
      (0.0, 1.6, -0.9, 1.2, -0.4, 0.8, -1.1);
 
-   function Frame_Depth return Depth_Range is (Frame);
+   function Frame_Depth return Natural is (Frame);
    function Tree_Depth return Tree_Range is (Branches);
    function Segment_Count return Natural is (Seg_N);
    function Segment_X1 (Index : Natural) return Integer is (Segs (Index * 5));
@@ -63,7 +63,7 @@ package body Recursion is
    procedure Publish is
    begin
       Meta (1) := Frame;
-      Meta (2) := Max_Depth;
+      Meta (2) := Depth_Ceiling;
       Meta (3) := Branches;
       Meta (4) := Seg_N;
       Meta (5) := Terms;
@@ -324,7 +324,7 @@ package body Recursion is
 
    procedure Deeper is
    begin
-      if Frame = Max_Depth then
+      if Frame >= Depth_Ceiling then
          Status := At_Top;
       else
          Frame := Frame + 1;
