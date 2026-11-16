@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="This chapter is still being drawn.">
+<meta name="description" content="No ant knows the plan. Together they do.">
 <title>Ant fugue</title>
 <link rel="icon" href="favicon.svg">
-<link rel="stylesheet" href="styles.css?v=1">
-<script type="module" src="shell.js?v=1"></script>
+<link rel="stylesheet" href="styles.css?v=15">
+<script type="module" src="ant.js?v=1"></script>
 </head>
 <body data-page-title="chapter6">
 <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -26,16 +26,32 @@
     <button type="button" id="sound-toggle" class="tool" aria-pressed="true"><span data-i18n="soundOn">Sound on</span></button>
   </div>
 </header>
-<main id="main" class="soon-main">
-  <p class="eyebrow" data-i18n="locked">Soon</p>
-  <div class="lock" aria-hidden="true">🔒</div>
+<main id="main">
   <h1 data-i18n="chapter6">Ant fugue</h1>
-  <p data-i18n="soon">Still drawing this chapter.</p>
-  <a class="back" href="gallery.html" data-i18n="back">Back</a>
+  <p class="canon-lead" data-i18n="antLead">No ant knows the plan. Together they do.</p>
+
+  <section class="rec-part" aria-labelledby="colony-title">
+    <h2 id="colony-title" data-i18n="antColony">Colony</h2>
+    <canvas id="colony" class="colony" width="840" height="540"></canvas>
+    <p id="zoom-now" class="canon-lead" data-i18n="antNear">Ants</p>
+    <div class="fade ant-zoom">
+      <span data-i18n="antNear">Ants</span>
+      <input id="zoom" type="range" min="0" max="2" step="1" value="0" aria-labelledby="colony-title">
+      <span data-i18n="antFar">One</span>
+    </div>
+  </section>
+
+  <section class="rec-part" aria-labelledby="fugue-title">
+    <h2 id="fugue-title" data-i18n="antFugue">Fugue</h2>
+    <div id="fugue" class="fugue"></div>
+    <div class="actions">
+      <button type="button" id="play-fugue" class="text-button"><span data-i18n="play">Play</span></button>
+    </div>
+  </section>
 </main>
 <footer>
   <span data-i18n="footer">For curious children.</span>
-  <span><a href="index.html" data-i18n="replay">See the loop</a> · <a href="https://github.com/RobertBoettcherSF/godel-escher-bach" data-i18n="repository">Repository</a></span>
+  <span><a href="gallery.html" data-i18n="back">Back</a> · <a href="index.html" data-i18n="replay">See the loop</a> · <a href="https://github.com/RobertBoettcherSF/godel-escher-bach" data-i18n="repository">Repository</a></span>
 </footer>
 <aside id="debug" hidden>
   <p><span data-i18n="dbgVersion">Version</span> <span id="dbg-version"></span></p>

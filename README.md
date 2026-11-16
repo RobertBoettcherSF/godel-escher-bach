@@ -14,7 +14,9 @@ v0.5 opens recursion. Frames nest, a tree branches, and rabbit dots follow the c
 
 v0.6 opens the crab canon. The same line of letters and the same eight notes run forward and backward together. Reversal, the palindrome check and the mirrored pitches are Ada, compiled to `crab.wasm`. v0.6.1 shows only the letters of the current word, and Another moves to the next word and its tune together. v0.6.2 lets Play loop, and lights the note each voice is sounding. v0.6.3 shows that one line on both staves, read from opposite ends. v0.6.4 keeps both staves on that line after a tap.
 
-English (UK), German, Spanish and French. Four further chapters are drawn as closed tiles.
+v0.7 opens the ant fugue. Ants wander a field, food grows trails, and four voices enter on one short tune. The rules are Ada, compiled to `ant.wasm`.
+
+English (UK), German, Spanish and French. Three further chapters are drawn as closed tiles.
 
 ## Run locally
 
@@ -27,7 +29,7 @@ Open http://localhost:8000. F9 shows the version, whether `miu.wasm` loaded, the
 ## Checks
 
 ```sh
-gprbuild -P tests/smoke.gpr && ./obj/native/smoke && ./obj/native/steps_smoke && ./obj/native/figure_smoke && ./obj/native/recursion_smoke && ./obj/native/crab_smoke
+gprbuild -P tests/smoke.gpr && ./obj/native/smoke && ./obj/native/steps_smoke && ./obj/native/figure_smoke && ./obj/native/recursion_smoke && ./obj/native/crab_smoke && ./obj/native/ant_smoke
 npm test
 ```
 

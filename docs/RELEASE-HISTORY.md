@@ -1,5 +1,13 @@
 # Release history
 
+## v0.7
+
+Ants, trails, and four voices.
+
+- No ant knows the plan. Together the colony does. A tap drops food. Ants that carry food leave a trail, and the trail fades, so paths appear on their own.
+- A slider steps from single ants, to soft groups, to one shape that follows the trails.
+- Four voices enter one after another on the same short tune. Play loops, and the sounding note lights up.
+
 ## v0.6.4
 
 Both staves stay on the one written line.

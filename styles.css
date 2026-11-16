@@ -587,6 +587,45 @@ footer {
   border-radius: 28px;
 }
 .staff .note { cursor: pointer; }
+.colony {
+  width: min(100%, 840px);
+  height: auto;
+  aspect-ratio: 28 / 18;
+  display: block;
+  margin: 8px auto 0;
+  background: #fffdf8;
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  touch-action: manipulation;
+  cursor: pointer;
+}
+.ant-zoom { max-width: 520px; margin-inline: auto; grid-template-columns: auto 1fr auto; }
+.fugue { width: min(100%, 420px); margin: 0 auto; }
+.fugue-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 8px 0;
+  opacity: 0.38;
+}
+.fugue-row.is-in { opacity: 1; }
+.fugue-voice { width: 16px; height: 16px; border-radius: 50%; flex: none; }
+.fugue-note {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+}
+.fugue-note.is-on {
+  background: var(--voice, #e7a008);
+  color: white;
+  border-color: transparent;
+}
 .staff .bar, .staff .halo { pointer-events: none; }
 .crab-stage {
   --crab-w: 108px;
