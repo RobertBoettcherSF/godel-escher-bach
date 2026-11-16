@@ -67,39 +67,21 @@ begin
    Check_Tree (10);
    Check (Recursion.Tree_Visible = 10, "ten splits fill the frame");
    declare
-      X10, Y10, X11, Y11, X12, X15 : Integer;
-      Deep : Boolean := False;
+      At_10 : constant Natural := Recursion.Segment_Count;
+      At_16 : Natural;
    begin
-      X10 := Recursion.Segment_X1 (0);
-      Y10 := Recursion.Segment_Y1 (0);
-      Recursion.Set_Tree (11);
-      Check (Recursion.Segment_Count in 8 .. 2047, "eleven stays drawable");
+      Recursion.Set_Tree (16);
+      At_16 := Recursion.Segment_Count;
+      Check (Recursion.Tree_Depth = 16, "sixteen splits");
+      Check (At_16 in At_10 .. 17_783, "sixteen stays drawable");
+      Check (Recursion.Segment_Level (0) = 0, "the trunk remains");
       Check
-        (Recursion.Segment_X1 (0) /= X10 or else Recursion.Segment_Y1 (0) /= Y10,
-         "eleven moves");
-      X11 := Recursion.Segment_X2 (0);
-      Y11 := Recursion.Segment_Y2 (0);
-      Recursion.Set_Tree (12);
-      Check
-        (Recursion.Segment_X2 (0) /= X11 or else Recursion.Segment_Y2 (0) /= Y11,
-         "twelve moves");
-      X12 := Recursion.Segment_X1 (0);
-      Recursion.Set_Tree (15);
-      Check (Recursion.Segment_X1 (0) /= X12, "fifteen moves");
-      X15 := Recursion.Segment_X1 (0);
-      Recursion.Set_Tree (20);
-      Check (Recursion.Segment_X1 (0) /= X15, "twenty moves");
-      Check (Recursion.Segment_Count in 8 .. 2047, "twenty stays drawable");
-      for I in 0 .. Recursion.Segment_Count - 1 loop
-         if Recursion.Segment_Level (I) >= 12 then
-            Deep := True;
-         end if;
-      end loop;
-      Check (Deep, "deep twigs exist");
-      Check (Recursion.Segment_Level (0) > 0, "the base is a limb");
-      X15 := Recursion.Segment_X2 (3);
-      Recursion.Set_Tree (20);
-      Check (Recursion.Segment_X2 (3) = X15, "the tree repeats");
+        (abs (Recursion.Segment_X1 (0) - Recursion.Segment_X2 (0)) <= 2,
+         "the deep trunk stays upright");
+      Recursion.Set_Tree (25);
+      Check (Recursion.Tree_Depth = 25, "twenty-five splits");
+      Check (Recursion.Segment_Count in At_16 .. 17_783, "twenty-five stays drawable");
+      Check (Recursion.Segment_Level (0) = 0, "still the whole tree");
    end;
    Recursion.Set_Tree (0);
    Check (Recursion.Tree_Depth = 0 and then Recursion.Segment_Count = 1, "reset to the trunk");

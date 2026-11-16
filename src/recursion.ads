@@ -7,10 +7,11 @@ package Recursion is
 
    --  Far past any visit. Deeper, Grow and Next saturate here.
    Depth_Ceiling : constant := 1_000_000;
-   --  Past this many splits the picture zooms into one branch.
+   --  Splits past this still count, but the picture only keeps
+   --  branches long enough to see.
    Visible_Cap   : constant := 10;
    Max_Digits    : constant := 256;
-   Max_Segments  : constant := 2047;
+   Max_Segments  : constant := 17783;
    Max_Dots      : constant := 400;
 
    type Status_Kind is (Ok, At_Bottom, At_Top, Full);
