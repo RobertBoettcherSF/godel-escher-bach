@@ -6,5 +6,5 @@ set -eu
 cd "$(dirname "$0")/.."
 SHA=$(git rev-parse --short=7 HEAD)
 WHEN=$(TZ=Europe/Berlin date +%Y%m%d-%H%M)
-printf 'v0.6.4 b%s %s\n' "$WHEN" "$SHA" > version.txt
+printf 'v0.7 b%s %s\n' "$WHEN" "$SHA" > version.txt
 python3 tools/stamp.py

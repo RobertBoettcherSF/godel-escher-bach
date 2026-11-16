@@ -69,6 +69,14 @@ if [ "$want" = "all" ] || [ "$want" = "crab" ]; then
     --export=crab_set_beat
 fi
 
+if [ "$want" = "all" ] || [ "$want" = "ant" ]; then
+  compile_module ant src/ant.adb \
+    --export=ant_meta --export=ant_x --export=ant_y --export=ant_carry \
+    --export=ant_trail --export=ant_food --export=ant_cluster \
+    --export=ant_sum_x --export=ant_sum_y --export=ant_motif --export=ant_voice \
+    --export=ant_reset --export=ant_step --export=ant_drop --export=ant_set_beat
+fi
+
 if [ "$want" = "all" ] || [ "$want" = "recursion" ]; then
   compile_module recursion src/recursion.adb \
     --export=recursion_meta --export=recursion_segments --export=recursion_dots \

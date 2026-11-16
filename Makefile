@@ -13,6 +13,7 @@ native:
 	./obj/native/figure_smoke
 	./obj/native/recursion_smoke
 	./obj/native/crab_smoke
+	./obj/native/ant_smoke
 
 test: native wasm
 	npm test

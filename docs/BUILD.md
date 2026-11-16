@@ -6,6 +6,7 @@ The Ada packages are compiled to WebAssembly with AdaWebPack 24 (GNAT-LLVM, wasm
 - `src/steps.ads`, `src/steps.adb` → `steps.wasm` (halving steps)
 - `src/figure.ads`, `src/figure.adb` → `figure.wasm` (figure and ground)
 - `src/crab.ads`, `src/crab.adb` → `crab.wasm` (the crab canon)
+- `src/ant.ads`, `src/ant.adb` → `ant.wasm` (the ant fugue)
 
 `./build.sh crab` rebuilds only the crab module. `./build.sh figure` rebuilds only the figure module, so the other wasm files stay byte-for-byte as they were.
 
@@ -57,7 +58,9 @@ Integers are 32-bit. Character arrays are bytes. `miu_reset`, `miu_apply(rule, p
 
 `recursion.wasm` exports the frame depth, the tree segments and the rabbit digits. Deeper keeps going, and Back stops at the outer frame. A tap grows the whole tree by one level. Branches shorter than about a pixel are not drawn. Next adds the next rabbit count with no small cap; big counts are drawn as larger dots with a legend.
 
-`crab.wasm` exports the letter tiles, the eight pitches and the mirrored voice. The tile count is the length of the current word. Another selects the next original melody. Ada keeps one written line and copies it to both staves on every change. At step s the upper voice sounds pitch s and the lower voice sounds pitch 7−s, which is the retrograde. Play loops every 340 ms. Ada names both columns. Case, spaces and punctuation drop out, and accented letters fold to A, E, I, O, U, C, N or Y. German ß folds to SS. Tapping a note on either staff changes that written pitch.
+`crab.wasm` exports the letter tiles, the eight pitches and the mirrored voice. The tile count is the length of the current word. Another selects the next original melody. Ada keeps one written line and copies it to both staves on every change. At step s the upper voice sounds pitch s and the lower voice sounds pitch 7−s, which is the retrograde.
+
+`ant.wasm` exports the ants, the trail grid, the food, the clusters and the four fugue voices. A tap adds food. Ants that carry food lay a trail, and every step the trail fades by one. Clusters are coarse grid cells, and their sizes add up to the ant count. The fugue motif is four notes. Voice v enters at beat 4v. Play loops every 340 ms. Ada names both columns. Case, spaces and punctuation drop out, and accented letters fold to A, E, I, O, U, C, N or Y. German ß folds to SS. Tapping a note on either staff changes that written pitch.
 
 ## Licences
 
