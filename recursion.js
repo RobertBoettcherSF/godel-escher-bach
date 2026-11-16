@@ -69,8 +69,7 @@ function read() {
     depth: meta[0],
     tree: meta[2],
     visible: meta[10],
-    focusX: meta[12],
-    focusY: meta[13],
+    sig: meta[12],
     segments,
     terms: meta[4],
     valueLen,
@@ -159,11 +158,11 @@ function drawFrames(state) {
   if (!sliding && shownDepth !== state.depth) paintScene(state.depth);
 }
 
-let treeSliding = false;
-
 function drawTree(state) {
-  const parts = [];
   const visible = state.visible;
+  const paths = [];
+  const leaves = [];
+  const channel = (from, to, mix) => Math.round(from + (to - from) * mix);
   for (let i = 0; i < state.segments; i += 1) {
     const base = i * 5;
     const level = state.seg[base + 4];
@@ -171,44 +170,25 @@ function drawTree(state) {
     const y1 = 1000 - state.seg[base + 1];
     const x2 = state.seg[base + 2];
     const y2 = 1000 - state.seg[base + 3];
-    const span = Math.max(state.tree - visible, 1);
-    const mix = state.tree <= 10
-      ? (visible === 0 ? 0 : level / visible)
-      : 0.42 + 0.58 * Math.min(1, Math.max(0, (level - visible) / span));
-    const channel = (from, to) => Math.round(from + (to - from) * mix);
-    const length = Math.hypot(x2 - x1, y2 - y1);
-    const width = state.tree <= 10
-      ? Math.max(2.2, 36 * 0.66 ** level)
-      : Math.max(2.8, Math.min(48, length * 0.12));
-    const colour = `rgb(${channel(107, 47)} ${channel(62, 122)} ${channel(38, 64)})`;
-    parts.push(
-      `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${colour}" stroke-width="${width.toFixed(1)}" stroke-linecap="round"/>`
-    );
+    if (level < 0) {
+      leaves.push(`<circle cx="${x2}" cy="${y2}" r="2.4" fill="#8ed18a"/>`);
+      continue;
+    }
+    if (!paths[level]) paths[level] = [];
+    paths[level].push(`M${x1} ${y1}L${x2} ${y2}`);
   }
-  tree.innerHTML = `<g id="tree-cam">${parts.join("")}</g>`;
+  const parts = [];
+  for (let level = 0; level < paths.length; level += 1) {
+    if (!paths[level]) continue;
+    const mix = visible === 0 ? 0 : level / visible;
+    const colour = `rgb(${channel(107, 47, mix)} ${channel(62, 122, mix)} ${channel(38, 64, mix)})`;
+    const width = Math.max(2.2, 36 * 0.66 ** level).toFixed(1);
+    parts.push(`<path d="${paths[level].join("")}" fill="none" stroke="${colour}" stroke-width="${width}" stroke-linecap="round"/>`);
+  }
+  tree.innerHTML = parts.join("") + leaves.join("");
   treeN.textContent = String(state.tree);
   treeBack.classList.toggle("is-dim", state.tree <= 0);
   treeBack.setAttribute("aria-disabled", state.tree <= 0 ? "true" : "false");
-}
-
-function animateTree(from, to, done) {
-  const cam = tree.querySelector("#tree-cam");
-  if (!cam || motionOff()) {
-    done();
-    return;
-  }
-  const start = performance.now();
-  const step = (now) => {
-    const t = Math.min(1, (now - start) / 560);
-    const eased = t < 0.5 ? 2 * t * t : 1 - ((-2 * t + 2) ** 2) / 2;
-    const tx = from.tx + (to.tx - from.tx) * eased;
-    const ty = from.ty + (to.ty - from.ty) * eased;
-    const scale = from.scale + (to.scale - from.scale) * eased;
-    cam.setAttribute("transform", `translate(${tx} ${ty}) scale(${scale})`);
-    if (t < 1) requestAnimationFrame(step);
-    else done();
-  };
-  requestAnimationFrame(step);
 }
 
 function dotAt(state, index) {
@@ -374,8 +354,15 @@ frames.addEventListener("keydown", (event) => {
 
 back.addEventListener("click", stepOut);
 
+const treeHint = document.getElementById("tree-hint");
+const treeReset = document.getElementById("tree-reset");
+
+function showTiny(on) {
+  treeHint.hidden = !on;
+  treeReset.classList.toggle("is-hot", on);
+}
+
 function growTree() {
-  if (treeSliding) return;
   const before = read();
   wasm.exports.recursion_tree(before.tree + 1);
   const state = read();
@@ -385,42 +372,20 @@ function growTree() {
     return;
   }
   playRise(state.tree);
-  if (before.tree >= 10 && !motionOff()) {
-    const fx = before.focusX;
-    const fy = 1000 - before.focusY;
-    treeSliding = true;
-    animateTree({tx: 0, ty: 0, scale: 1}, {tx: fx * (1 - 1.6), ty: fy * (1 - 1.6), scale: 1.6}, () => {
-      drawTree(state);
-      treeSliding = false;
-    });
-  } else {
-    drawTree(state);
-  }
+  drawTree(state);
+  showTiny(state.segments === before.segments && state.sig === before.sig);
 }
 
 function backTree() {
-  if (treeSliding) return;
   const before = read();
   if (before.tree <= 0) {
     play("no");
     return;
   }
   wasm.exports.recursion_tree(before.tree - 1);
-  const state = read();
   playFall(before.tree);
-  drawTree(state);
-  if (before.tree > 10 && !motionOff()) {
-    const fx = state.focusX;
-    const fy = 1000 - state.focusY;
-    const cam = tree.querySelector("#tree-cam");
-    const from = {tx: fx * (1 - 1.6), ty: fy * (1 - 1.6), scale: 1.6};
-    cam.setAttribute("transform", `translate(${from.tx} ${from.ty}) scale(${from.scale})`);
-    treeSliding = true;
-    animateTree(from, {tx: 0, ty: 0, scale: 1}, () => {
-      cam.removeAttribute("transform");
-      treeSliding = false;
-    });
-  }
+  drawTree(read());
+  showTiny(false);
 }
 
 function stepRabbit() {
@@ -441,11 +406,11 @@ tree.addEventListener("keydown", (event) => {
   growTree();
 });
 treeBack.addEventListener("click", backTree);
-document.getElementById("tree-reset").addEventListener("click", () => {
-  if (treeSliding) return;
+treeReset.addEventListener("click", () => {
   wasm.exports.recursion_tree(0);
   play("reset");
   drawTree(read());
+  showTiny(false);
 });
 
 next.addEventListener("click", stepRabbit);
@@ -470,7 +435,7 @@ document.getElementById("rabbit-reset").addEventListener("click", () => {
   draw();
 });
 
-const response = await fetch("recursion.wasm?v=5");
+const response = await fetch("recursion.wasm?v=6");
 const {instance} = await WebAssembly.instantiate(await response.arrayBuffer());
 wasm = instance;
 wasm.exports.recursion_reset();

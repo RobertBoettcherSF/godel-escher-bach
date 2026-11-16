@@ -1,5 +1,12 @@
 # Release history
 
+## v0.5.4
+
+The whole tree stays in the frame.
+
+- Each tap adds one level to the whole tree. There is no zoom. Branches smaller than a pixel are left out, and the tips become a dusting of leaves. When a tap no longer changes the picture, a short note suggests Reset.
+- Back removes one level. Reset returns to the trunk.
+
 ## v0.5.3
 
 The tree keeps zooming.

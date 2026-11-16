@@ -6,8 +6,8 @@
 <meta name="description" content="Frames inside frames, a tree that branches, and rabbits counted in dots.">
 <title>Recursion</title>
 <link rel="icon" href="favicon.svg">
-<link rel="stylesheet" href="styles.css?v=10">
-<script type="module" src="recursion.js?v=5"></script>
+<link rel="stylesheet" href="styles.css?v=11">
+<script type="module" src="recursion.js?v=6"></script>
 </head>
 <body data-page-title="chapterRec">
 <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -50,6 +50,7 @@
     <h2 id="tree-title" data-i18n="recTree">Tree</h2>
     <div class="level-readout"><strong id="tree-n">5</strong></div>
     <svg id="tree" class="tap-picture" viewBox="0 0 1000 1000" role="button" tabindex="0" data-i18n-aria="recGrow" aria-label="Grow"></svg>
+    <p id="tree-hint" class="tree-hint" hidden><span data-i18n="recTooSmall">Too small to see. Reset?</span></p>
     <div class="actions">
       <button type="button" id="tree-grow" class="text-button"><span data-i18n="recGrow">Grow</span></button>
       <button type="button" id="tree-back" class="text-button"><span data-i18n="recBack">Back</span></button>

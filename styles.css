@@ -192,6 +192,16 @@ h2 { font-size: 1.05rem; margin: 0; }
   font-weight: 700;
   color: var(--i);
 }
+.tree-hint {
+  margin: 0 auto 8px;
+  max-width: 280px;
+  text-align: center;
+  font-weight: 700;
+}
+.text-button.is-hot {
+  border-color: var(--ink);
+  box-shadow: inset 0 0 0 2px var(--i);
+}
 .actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
 .text-button { min-width: 112px; border-radius: 16px; font-weight: 700; }
 .text-button.is-dim { opacity: 0.45; }

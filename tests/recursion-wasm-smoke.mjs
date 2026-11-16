@@ -66,16 +66,16 @@ test("frames, branches and rabbit dots stay inside their caps", () => {
   assert.equal(st.visible, 10);
   const trunk = st.seg[0] - st.seg[2];
   assert.ok(Math.abs(trunk) <= 2);
-  const at10 = st.seg[0];
-  e.recursion_tree(11);
+  e.recursion_tree(16);
   st = read();
-  assert.ok(st.segments > 8 && st.segments <= 2047);
-  assert.notEqual(st.seg[0], at10);
-  e.recursion_tree(20);
+  assert.equal(st.tree, 16);
+  assert.ok(st.segments >= 2047 && st.segments <= 17783);
+  assert.equal(st.seg[4], 0);
+  e.recursion_tree(25);
   st = read();
-  assert.equal(st.tree, 20);
-  assert.ok(st.segments > 8 && st.segments <= 2047);
-  assert.ok(st.seg[4] > 0);
+  assert.equal(st.tree, 25);
+  assert.ok(st.segments >= 2047 && st.segments <= 17783);
+  assert.equal(st.seg[4], 0);
   e.recursion_tree(0);
   assert.equal(read().segments, 1);
 
