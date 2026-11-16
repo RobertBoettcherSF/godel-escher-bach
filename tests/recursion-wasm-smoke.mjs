@@ -35,11 +35,15 @@ test("frames, branches and rabbit dots stay inside their caps", () => {
   assert.equal(st.terms, 1);
   assert.equal(st.value, 1);
 
-  for (let i = 0; i < 8; i += 1) e.recursion_deeper();
+  for (let i = 0; i < 30; i += 1) e.recursion_deeper();
   st = read();
-  assert.equal(st.depth, 6);
-  assert.equal(st.error, 3);
-  for (let i = 0; i < 8; i += 1) e.recursion_back();
+  assert.equal(st.depth, 31);
+  assert.equal(st.error, 0);
+  for (let i = 0; i < 30; i += 1) e.recursion_back();
+  st = read();
+  assert.equal(st.depth, 1);
+  assert.equal(st.error, 0);
+  e.recursion_back();
   st = read();
   assert.equal(st.depth, 1);
   assert.equal(st.error, 2);

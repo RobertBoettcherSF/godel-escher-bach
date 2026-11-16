@@ -48,14 +48,12 @@ begin
    Check (Recursion.Frame_Depth = 1, "starts on the outer frame");
    Check (Recursion.Tree_Depth = 5, "tree opens midway");
    Check (Recursion.Rabbit_Terms = 1 and then Recursion.Rabbit_Value = 1, "opens on one rabbit");
-   for Step in 1 .. 5 loop
+   for Step in 1 .. 25 loop
       Recursion.Deeper;
    end loop;
-   Check (Recursion.Frame_Depth = 6, "six frames");
-   Recursion.Deeper;
-   Check (Recursion.Last_Status = Recursion.At_Top, "no seventh frame");
-   Check (Recursion.Frame_Depth = 6, "depth stays");
-   for Step in 1 .. 5 loop
+   Check (Recursion.Frame_Depth = 26, "twenty-six frames");
+   Check (Recursion.Last_Status = Recursion.Ok, "still going");
+   for Step in 1 .. 25 loop
       Recursion.Back;
    end loop;
    Check (Recursion.Frame_Depth = 1, "back to the outside");

@@ -1,5 +1,12 @@
 # Release history
 
+## v0.5.1
+
+Stories keep going.
+
+- A tap on the picture, or Deeper, opens one more level. There is no stop in sight. The colours repeat, and a short counter shows how far in you are. Back returns one level at a time, and stops on the outside.
+- The flower stem ends on the soil line, in the outer picture and in every picture inside it.
+
 ## v0.5
 
 Stories, a tree, and rabbits.

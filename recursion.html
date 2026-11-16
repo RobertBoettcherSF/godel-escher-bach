@@ -6,15 +6,15 @@
 <meta name="description" content="Frames inside frames, a tree that branches, and rabbits counted in dots.">
 <title>Recursion</title>
 <link rel="icon" href="favicon.svg">
-<link rel="stylesheet" href="styles.css?v=7">
-<script type="module" src="recursion.js?v=2"></script>
+<link rel="stylesheet" href="styles.css?v=9">
+<script type="module" src="recursion.js?v=3"></script>
 </head>
 <body data-page-title="chapterRec">
 <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
 <header class="top">
   <div class="topbar">
     <a class="brand" href="gallery.html" data-i18n="brand">Strange loops</a>
-    <span class="version">v0.5 b20261116-1250 a412f3c</span>
+    <span class="version">v0.5.1 b20261116-1308 eedf4cb</span>
   </div>
   <div class="toolbar">
     <div class="language-flags" role="group" data-i18n-aria="languages" aria-label="Choose a language">
@@ -34,8 +34,11 @@
   <section class="rec-part" aria-labelledby="stories-title">
     <h2 id="stories-title" data-i18n="recStories">Stories</h2>
     <div class="story">
-      <ol id="stack" class="level-stack"></ol>
-      <div id="frames" class="frame-box"></div>
+      <div class="level-readout">
+        <ol id="stack" class="level-stack"></ol>
+        <strong id="level-n">1</strong>
+      </div>
+      <div id="frames" class="frame-box" role="button" tabindex="0" data-i18n-aria="recDeeper" aria-label="Deeper"></div>
     </div>
     <div class="actions">
       <button type="button" id="deeper" class="text-button"><span data-i18n="recDeeper">Deeper</span></button>
