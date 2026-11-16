@@ -22,7 +22,7 @@ function read() {
     dots,
     error: meta[9],
     seg: new Int32Array(memory, e.recursion_segments() >>> 0, Math.max(segments, 1) * 5),
-    dot: new Int32Array(memory, e.recursion_dots() >>> 0, Math.max(dots, 1) * 4)
+    dot: new Int32Array(memory, e.recursion_dots() >>> 0, Math.max(dots, 1) * 5)
   };
 }
 
@@ -32,7 +32,8 @@ test("frames, branches and rabbit dots stay inside their caps", () => {
   assert.equal(st.depth, 1);
   assert.equal(st.tree, 5);
   assert.equal(st.segments, 2 ** 6 - 1);
-  assert.equal(st.terms, 0);
+  assert.equal(st.terms, 1);
+  assert.equal(st.value, 1);
 
   for (let i = 0; i < 8; i += 1) e.recursion_deeper();
   st = read();
@@ -52,28 +53,29 @@ test("frames, branches and rabbit dots stay inside their caps", () => {
   assert.ok(Math.abs(trunk) <= 2);
 
   e.recursion_next();
-  e.recursion_next();
+  st = read();
+  assert.equal(st.terms, 2);
+  assert.equal(st.value, 1);
   e.recursion_next();
   st = read();
   assert.equal(st.value, 2);
-  assert.equal(st.dots, 2);
   for (let i = 0; i < 8; i += 1) e.recursion_next();
   st = read();
   assert.equal(st.value, 89);
   assert.equal(st.older, 34);
   assert.equal(st.newer, 55);
-  assert.equal(st.dots, 89);
   let red = 0;
   let blue = 0;
   for (let i = 0; i < st.dots; i += 1) {
-    if (st.dot[i * 4 + 3] === 0) red += 1;
+    if (st.dot[i * 5 + 4] !== 2) continue;
+    if (st.dot[i * 5 + 3] === 0) red += 1;
     else blue += 1;
-    assert.ok(st.dot[i * 4 + 2] >= 8);
+    assert.ok(st.dot[i * 5 + 2] >= 10);
   }
   assert.equal(red, 34);
   assert.equal(blue, 55);
   e.recursion_next();
   assert.equal(read().error, 4);
   e.recursion_rabbits_reset();
-  assert.equal(read().value, 0);
+  assert.equal(read().terms, 1);
 });

@@ -14,9 +14,7 @@ package body Recursion is
    Segs : array (0 .. Max_Segments * 5 - 1) of Integer := (others => 0);
 
    Dot_N : Natural := 0;
-   Dots : array (0 .. Max_Dots * 4 - 1) of Integer := (others => 0);
-   Work_DX, Work_DY : array (0 .. Max_Dots - 1) of Float := (others => 0.0);
-   Work_DC : array (0 .. Max_Dots - 1) of Integer := (others => 0);
+   Dots : array (0 .. Max_Dots * 5 - 1) of Integer := (others => 0);
 
    Work_X1, Work_Y1, Work_X2, Work_Y2 :
      array (0 .. Max_Segments - 1) of Float := (others => 0.0);
@@ -41,10 +39,11 @@ package body Recursion is
    function Rabbit_Older return Natural is (Older);
    function Rabbit_Newer return Natural is (Newer);
    function Dot_Count return Natural is (Dot_N);
-   function Dot_X (Index : Natural) return Integer is (Dots (Index * 4));
-   function Dot_Y (Index : Natural) return Integer is (Dots (Index * 4 + 1));
-   function Dot_R (Index : Natural) return Integer is (Dots (Index * 4 + 2));
-   function Dot_Color (Index : Natural) return Integer is (Dots (Index * 4 + 3));
+   function Dot_X (Index : Natural) return Integer is (Dots (Index * 5));
+   function Dot_Y (Index : Natural) return Integer is (Dots (Index * 5 + 1));
+   function Dot_R (Index : Natural) return Integer is (Dots (Index * 5 + 2));
+   function Dot_Color (Index : Natural) return Integer is (Dots (Index * 5 + 3));
+   function Dot_Pile (Index : Natural) return Integer is (Dots (Index * 5 + 4));
    function Last_Status return Status_Kind is (Status);
 
    function Code (Item : Status_Kind) return Integer is
@@ -127,10 +126,10 @@ package body Recursion is
       if Level = Branches then
          return;
       end if;
-      Spread := (30.0 + Wobble (Level mod 7)) * Factor * Pi / 180.0;
-      Next := Length * 0.70;
-      Branch (X2, Y2, Angle + Spread, Next, Level + 1, Factor * 0.94);
-      Branch (X2, Y2, Angle - Spread, Next, Level + 1, Factor * 0.94);
+      Spread := (22.0 + Wobble (Level mod 7)) * Factor * Pi / 180.0;
+      Next := (if Level = 0 then 0.85 else Length * 0.66);
+      Branch (X2, Y2, Angle + Spread, Next, Level + 1, Factor * 0.97);
+      Branch (X2, Y2, Angle - Spread, Next, Level + 1, Factor * 0.97);
    end Branch;
 
    procedure Fit_Tree is
@@ -152,7 +151,7 @@ package body Recursion is
          Max_X := Max_X + 0.4;
       end if;
       Span := Float'Max (Max_X - Min_X, Max_Y - Min_Y);
-      Scale := 920.0 / Span;
+      Scale := 800.0 / Span;
       Offset_X := 500.0 - (Min_X + Max_X) * 0.5 * Scale;
       Offset_Y := 500.0 - (Min_Y + Max_Y) * 0.5 * Scale;
       Seg_N := Work_N;
@@ -168,7 +167,7 @@ package body Recursion is
    procedure Grow_Tree is
    begin
       Work_N := 0;
-      Branch (0.0, 0.0, Pi / 2.0, 1.15, 0, 1.0);
+      Branch (0.0, 0.0, Pi / 2.0, 0.38, 0, 1.0);
       Fit_Tree;
    end Grow_Tree;
 
@@ -188,36 +187,54 @@ package body Recursion is
       return B;
    end Fib;
 
-   function Columns (Count : Natural) return Natural is
-      Guess : Natural := 1;
+   procedure Add_Dot
+     (X, Y : Float;
+      Radius, Color, Pile : Integer)
+   is
    begin
-      while Guess * Guess < Count loop
-         Guess := Guess + 1;
-      end loop;
-      return Guess;
-   end Columns;
-
-   procedure Add_Dot (X, Y : Float; Color : Integer) is
-   begin
-      Work_DX (Dot_N) := X;
-      Work_DY (Dot_N) := Y;
-      Work_DC (Dot_N) := Color;
+      Dots (Dot_N * 5) := Integer (X);
+      Dots (Dot_N * 5 + 1) := Integer (Y);
+      Dots (Dot_N * 5 + 2) := Radius;
+      Dots (Dot_N * 5 + 3) := Color;
+      Dots (Dot_N * 5 + 4) := Pile;
       Dot_N := Dot_N + 1;
    end Add_Dot;
 
-   procedure Pack
+   procedure Best_Cell
      (Count : Natural;
-      Origin_X, Origin_Y : Float;
-      Color : Integer)
+      Max_W, Max_H, Limit : Float;
+      Cols, Rows : out Natural;
+      Cell : out Float)
    is
-      Cols, Rows, Used, Shift : Natural;
+      Try_Rows : Natural;
+      Try_Cell : Float;
+   begin
+      Cols := 1;
+      Rows := Count;
+      Cell := Float'Min (Max_W, Max_H / Float (Count));
+      for Try_Cols in 1 .. Count loop
+         Try_Rows := (Count + Try_Cols - 1) / Try_Cols;
+         Try_Cell := Float'Min (Max_W / Float (Try_Cols), Max_H / Float (Try_Rows));
+         if Try_Cell > Cell then
+            Cell := Try_Cell;
+            Cols := Try_Cols;
+            Rows := Try_Rows;
+         end if;
+      end loop;
+      if Cell > Limit then
+         Cell := Limit;
+      end if;
+   end Best_Cell;
+
+   procedure Pack_Grid
+     (Count, Color, Pile : Natural;
+      Left, Bottom, Cell : Float;
+      Cols, Rows : Natural)
+   is
+      Used, Shift : Natural;
+      Radius : constant Integer := Integer (Cell * 0.42);
       X, Y : Float;
    begin
-      if Count = 0 then
-         return;
-      end if;
-      Cols := Columns (Count);
-      Rows := (Count + Cols - 1) / Cols;
       for I in 0 .. Count - 1 loop
          if I / Cols = Rows - 1 then
             Used := Count - (Rows - 1) * Cols;
@@ -225,71 +242,48 @@ package body Recursion is
          else
             Shift := 0;
          end if;
-         X := Origin_X + Float (I mod Cols) + Float (Shift) * 0.5;
-         Y := Origin_Y + Float (I / Cols);
-         Add_Dot (X, Y, Color);
+         X := Left + (Float (I mod Cols) + 0.5 + Float (Shift) * 0.5) * Cell;
+         Y := Bottom + Float (Rows) * Cell - (Float (I / Cols) + 0.5) * Cell;
+         Add_Dot (X, Y, Radius, Color, Pile);
       end loop;
-   end Pack;
-
-   procedure Fit_Dots is
-      Min_X, Max_X, Min_Y, Max_Y, Span, Scale : Float;
-      Radius : Integer;
-   begin
-      if Dot_N = 0 then
-         return;
-      end if;
-      Min_X := Work_DX (0);
-      Max_X := Min_X;
-      Min_Y := Work_DY (0);
-      Max_Y := Min_Y;
-      for I in 0 .. Dot_N - 1 loop
-         Min_X := Float'Min (Min_X, Work_DX (I));
-         Max_X := Float'Max (Max_X, Work_DX (I));
-         Min_Y := Float'Min (Min_Y, Work_DY (I));
-         Max_Y := Float'Max (Max_Y, Work_DY (I));
-      end loop;
-      if Max_X - Min_X < 1.0 then
-         Min_X := Min_X - 1.2;
-         Max_X := Max_X + 1.2;
-      end if;
-      if Max_Y - Min_Y < 1.0 then
-         Min_Y := Min_Y - 1.2;
-         Max_Y := Max_Y + 1.2;
-      end if;
-      Span := Float'Max (Max_X - Min_X, Max_Y - Min_Y);
-      Scale := 760.0 / Span;
-      Radius := Integer (0.42 * Scale);
-      for I in 0 .. Dot_N - 1 loop
-         Dots (I * 4) := Integer ((Work_DX (I) - (Min_X + Max_X) * 0.5) * Scale + 500.0);
-         Dots (I * 4 + 1) := Integer ((Work_DY (I) - (Min_Y + Max_Y) * 0.5) * Scale + 500.0);
-         Dots (I * 4 + 2) := Radius;
-         Dots (I * 4 + 3) := Work_DC (I);
-      end loop;
-   end Fit_Dots;
+   end Pack_Grid;
 
    procedure Place_Rabbits is
-      Left_Cols : Natural;
+      Cols_A, Rows_A, Cols_B, Rows_B : Natural;
+      Cell_A, Cell_B : Float;
+      Width_A, Height_A, Height_B, Big_A : Float;
    begin
       Dot_N := 0;
-      if Terms = 0 then
-         return;
-      elsif Terms = 1 then
-         Add_Dot (0.0, 0.0, 0);
+      if Terms = 1 then
+         Add_Dot (500.0, 560.0, 150, 0, 2);
       elsif Terms = 2 then
-         Add_Dot (-1.6, 0.0, 0);
-         Add_Dot (1.6, 0.0, 1);
+         Add_Dot (500.0, 560.0, 150, 1, 2);
       else
-         Left_Cols := Columns (Older);
-         Pack (Older, 0.0, 0.0, 0);
-         Pack (Newer, Float (Left_Cols) + 0.85, 0.0, 1);
+         Best_Cell (Older, 120.0, 240.0, 22.0, Cols_A, Rows_A, Cell_A);
+         Best_Cell (Newer, 120.0, 240.0, 22.0, Cols_B, Rows_B, Cell_B);
+         Width_A := Float (Cols_A) * Cell_A;
+         Height_A := Float (Rows_A) * Cell_A;
+         Height_B := Float (Rows_B) * Cell_B;
+         Pack_Grid (Older, 0, 0, 28.0, 560.0 - Height_A, Cell_A, Cols_A, Rows_A);
+         Pack_Grid (Newer, 1, 1, 90.0 + Width_A, 560.0 - Height_B, Cell_B, Cols_B, Rows_B);
+         Best_Cell (Older, 170.0, 560.0, 72.0, Cols_A, Rows_A, Cell_A);
+         Best_Cell (Newer, 250.0, 560.0, 72.0, Cols_B, Rows_B, Cell_B);
+         Big_A := Float (Cols_A) * Cell_A;
+         Height_A := Float (Rows_A) * Cell_A;
+         Height_B := Float (Rows_B) * Cell_B;
+         Pack_Grid
+           (Older, 0, 2, 430.0, 200.0 + Float'Max (Height_A, Height_B) - Height_A,
+            Cell_A, Cols_A, Rows_A);
+         Pack_Grid
+           (Newer, 1, 2, 454.0 + Big_A, 200.0 + Float'Max (Height_A, Height_B) - Height_B,
+            Cell_B, Cols_B, Rows_B);
       end if;
-      Fit_Dots;
    end Place_Rabbits;
 
    procedure Reset_Rabbits is
    begin
-      Terms := 0;
-      Value := 0;
+      Terms := 1;
+      Value := 1;
       Older := 0;
       Newer := 0;
       Status := Ok;

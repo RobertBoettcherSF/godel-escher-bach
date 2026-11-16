@@ -2,15 +2,14 @@ import "./shell.js?v=1";
 import {t} from "./i18n.js?v=1";
 import {play, playFall, playRise} from "./sounds.js?v=1";
 
-const NS = "http://www.w3.org/2000/svg";
-const FRAME = ["#3d5a80", "#e07a5f", "#e9c46a", "#2a9d8f", "#6d597a", "#241833"];
-const PAPER = ["#f4f7fb", "#fff1ec", "#fff8e8", "#eef8f4", "#f4eef8", "#f7f3ee"];
-const SEED = `<svg class="seed" viewBox="0 0 80 80" aria-hidden="true">
-  <ellipse cx="40" cy="62" rx="18" ry="7" fill="#c4a15a"/>
-  <path d="M40 58 C40 40 22 36 18 20" fill="none" stroke="#2a9d8f" stroke-width="5" stroke-linecap="round"/>
-  <ellipse cx="22" cy="22" rx="12" ry="8" transform="rotate(-30 22 22)" fill="#81b29a"/>
-  <circle cx="40" cy="36" r="14" fill="#e9c46a"/>
-  <circle cx="40" cy="36" r="5" fill="#fff6ea"/>
+const FRAME = ["#3d5a80", "#c45c44", "#d4a017", "#1f7a64", "#6d597a", "#241833"];
+const SKY = ["#d7ebf7", "#fde7dc", "#fff4d4", "#d9f3ea", "#efe4f7", "#f6f1ea"];
+const FLOWER = `<svg class="flower" viewBox="0 0 80 110" aria-hidden="true">
+  <ellipse cx="40" cy="102" rx="26" ry="7" fill="#c4a15a"/>
+  <path d="M40 96 C40 70 18 62 14 36" fill="none" stroke="#2a9d8f" stroke-width="6" stroke-linecap="round"/>
+  <ellipse cx="18" cy="34" rx="16" ry="10" transform="rotate(-28 18 34)" fill="#81b29a"/>
+  <circle cx="46" cy="58" r="20" fill="#e9c46a"/>
+  <circle cx="46" cy="58" r="8" fill="#fff6ea"/>
 </svg>`;
 
 const frames = document.getElementById("frames");
@@ -44,22 +43,66 @@ function read() {
     dots,
     error: meta[9],
     seg: new Int32Array(memory, exp.recursion_segments() >>> 0, Math.max(segments, 1) * 5),
-    dot: new Int32Array(memory, exp.recursion_dots() >>> 0, Math.max(dots, 1) * 4)
+    dot: new Int32Array(memory, exp.recursion_dots() >>> 0, Math.max(dots, 1) * 5)
   };
 }
 
-function drawFrames(state) {
-  let inner = SEED;
-  for (let level = state.depth; level >= 1; level -= 1) {
-    inner = `<div class="nest" style="border-color:${FRAME[level - 1]};background:${PAPER[level - 1]}">${inner}</div>`;
+function sceneMarkup(level) {
+  const frame = level < 6
+    ? `<div class="wall-frame" style="background:${FRAME[level]}">${sceneMarkup(level + 1)}</div>`
+    : `<div class="wall-frame blank" style="background:${FRAME[5]}"><div class="mat"></div></div>`;
+  return `<div class="scene" data-level="${level}" style="background:${SKY[level - 1]}">
+    <div class="sun"></div>
+    ${FLOWER}
+    <div class="ground"></div>
+    ${frame}
+  </div>`;
+}
+
+let scenesReady = false;
+let shownDepth = 0;
+
+function ensureScenes() {
+  if (scenesReady) return;
+  frames.innerHTML = `<div class="story-stage"><div class="scene-cam">${sceneMarkup(1)}</div></div>`;
+  scenesReady = true;
+}
+
+function applyZoom(depth, animate) {
+  const cam = frames.querySelector(".scene-cam");
+  const stage = frames.querySelector(".story-stage");
+  const scene = frames.querySelector(`.scene[data-level="${depth}"]`);
+  const target = depth === 1 ? scene : scene.parentElement;
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const previous = cam.style.transform;
+  cam.style.transition = "none";
+  cam.style.transform = "none";
+  const stageBox = stage.getBoundingClientRect();
+  const targetBox = target.getBoundingClientRect();
+  const scale = stageBox.width / targetBox.width;
+  const next = `translate(${(-(targetBox.left - stageBox.left) * scale).toFixed(2)}px, ${(-(targetBox.top - stageBox.top) * scale).toFixed(2)}px) scale(${scale.toFixed(4)})`;
+  if (animate && !reduced && previous) {
+    cam.style.transform = previous;
+    cam.getBoundingClientRect();
+    cam.style.transition = "transform 0.7s ease";
+    cam.style.transform = next;
+  } else {
+    cam.style.transform = next;
   }
-  frames.innerHTML = inner;
+}
+
+function drawFrames(state) {
+  ensureScenes();
   stack.replaceChildren();
   for (let level = 1; level <= state.maxDepth; level += 1) {
     const item = document.createElement("li");
     item.style.background = level <= state.depth ? FRAME[level - 1] : "#eadcc6";
     if (level === state.depth) item.classList.add("here");
     stack.append(item);
+  }
+  if (shownDepth !== state.depth) {
+    applyZoom(state.depth, shownDepth !== 0);
+    shownDepth = state.depth;
   }
   deeper.classList.toggle("is-dim", state.depth >= state.maxDepth);
   deeper.setAttribute("aria-disabled", state.depth >= state.maxDepth ? "true" : "false");
@@ -72,8 +115,10 @@ function drawTree(state) {
   for (let i = 0; i < state.segments; i += 1) {
     const base = i * 5;
     const level = state.seg[base + 4];
-    const width = Math.max(7, 30 * 0.72 ** level);
-    const colour = level === 0 ? "#241833" : "#1f7a45";
+    const mix = state.tree === 0 ? 0 : level / state.tree;
+    const channel = (from, to) => Math.round(from + (to - from) * mix);
+    const width = Math.max(2.2, 36 * 0.66 ** level);
+    const colour = `rgb(${channel(107, 47)} ${channel(62, 122)} ${channel(38, 64)})`;
     parts.push(
       `<line x1="${state.seg[base]}" y1="${1000 - state.seg[base + 1]}" x2="${state.seg[base + 2]}" y2="${1000 - state.seg[base + 3]}" stroke="${colour}" stroke-width="${width.toFixed(1)}" stroke-linecap="round"/>`
     );
@@ -83,28 +128,61 @@ function drawTree(state) {
   depthN.textContent = String(state.tree);
 }
 
-function drawRabbits(state) {
-  if (state.dots === 0) {
-    rabbits.innerHTML = `<circle cx="500" cy="500" r="220" fill="#fffdf8" stroke="#eadcc6" stroke-width="16"/>`;
-  } else {
-    const marks = [];
-    let redRight = -1;
-    let blueLeft = 2000;
-    for (let i = 0; i < state.dots; i += 1) {
-      const x = state.dot[i * 4];
-      const y = 1000 - state.dot[i * 4 + 1];
-      const r = state.dot[i * 4 + 2];
-      const color = state.dot[i * 4 + 3];
-      if (color === 0) redRight = Math.max(redRight, x);
-      else blueLeft = Math.min(blueLeft, x);
-      marks.push(`<circle cx="${x}" cy="${y}" r="${r}" fill="${color === 0 ? "#e23b4a" : "#2c6bed"}"/>`);
-    }
-    if (state.terms >= 3 && redRight > 0 && blueLeft < 2000) {
-      const mid = (redRight + blueLeft) / 2;
-      marks.unshift(`<rect x="${mid - 10}" y="180" width="20" height="640" rx="10" fill="#241833"/>`);
-    }
-    rabbits.innerHTML = marks.join("");
+function dotAt(state, index) {
+  const base = index * 5;
+  return {
+    x: state.dot[base],
+    y: 1000 - state.dot[base + 1],
+    r: state.dot[base + 2],
+    color: state.dot[base + 3],
+    pile: state.dot[base + 4]
+  };
+}
+
+function pileBounds(dots) {
+  let minX = Infinity;
+  let maxX = -Infinity;
+  let minY = Infinity;
+  let maxY = -Infinity;
+  for (const dot of dots) {
+    minX = Math.min(minX, dot.x - dot.r);
+    maxX = Math.max(maxX, dot.x + dot.r);
+    minY = Math.min(minY, dot.y - dot.r);
+    maxY = Math.max(maxY, dot.y + dot.r);
   }
+  return {minX, maxX, minY, maxY, cx: (minX + maxX) / 2};
+}
+
+function drawRabbits(state) {
+  const marks = [];
+  const piles = [[], [], []];
+  for (let i = 0; i < state.dots; i += 1) {
+    const dot = dotAt(state, i);
+    piles[dot.pile].push(dot);
+    marks.push(`<circle cx="${dot.x}" cy="${dot.y}" r="${dot.r}" fill="${dot.color === 0 ? "#e23b4a" : "#2c6bed"}"/>`);
+  }
+  const label = (dots, text, size) => {
+    if (!dots.length) return;
+    const box = pileBounds(dots);
+    marks.push(`<text x="${box.cx}" y="${box.maxY + size}" text-anchor="middle" font-size="${size}" font-weight="700" fill="#241833">${text}</text>`);
+  };
+  if (state.terms >= 3) {
+    label(piles[0], String(state.older), 36);
+    label(piles[1], String(state.newer), 36);
+    label(piles[2], String(state.value), 48);
+    const left = pileBounds(piles[0]);
+    const mid = pileBounds(piles[1]);
+    const right = pileBounds(piles[2]);
+    const plusX = (left.maxX + mid.minX) / 2;
+    const plusY = (left.minY + left.maxY) / 2;
+    marks.push(`<text x="${plusX}" y="${plusY}" text-anchor="middle" dominant-baseline="middle" font-size="54" font-weight="700" fill="#241833">+</text>`);
+    const arrowY = (right.minY + right.maxY) / 2;
+    marks.push(`<line x1="${mid.maxX + 16}" y1="${arrowY}" x2="${right.minX - 28}" y2="${arrowY}" stroke="#241833" stroke-width="8" stroke-linecap="round"/>`);
+    marks.push(`<polygon points="${right.minX - 12},${arrowY} ${right.minX - 34},${arrowY - 14} ${right.minX - 34},${arrowY + 14}" fill="#241833"/>`);
+  } else {
+    label(piles[2], String(state.value), 56);
+  }
+  rabbits.innerHTML = marks.join("");
   rabbitN.textContent = String(state.value);
   next.classList.toggle("is-dim", state.terms >= 11);
   next.setAttribute("aria-disabled", state.terms >= 11 ? "true" : "false");
@@ -164,7 +242,7 @@ document.getElementById("rabbit-reset").addEventListener("click", () => {
   draw();
 });
 
-const response = await fetch("recursion.wasm?v=1");
+const response = await fetch("recursion.wasm?v=2");
 const {instance} = await WebAssembly.instantiate(await response.arrayBuffer());
 wasm = instance;
 wasm.exports.recursion_reset();

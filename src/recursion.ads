@@ -9,7 +9,7 @@ package Recursion is
    Max_Tree    : constant := 10;
    Max_Terms   : constant := 11;
    Max_Segments : constant := 2047;
-   Max_Dots    : constant := 89;
+   Max_Dots    : constant := 200;
 
    subtype Depth_Range is Natural range 1 .. Max_Depth;
    subtype Tree_Range is Natural range 0 .. Max_Tree;
@@ -42,6 +42,7 @@ package Recursion is
    function Dot_Y (Index : Natural) return Integer;
    function Dot_R (Index : Natural) return Integer;
    function Dot_Color (Index : Natural) return Integer;
+   function Dot_Pile (Index : Natural) return Integer;
    function Last_Status return Status_Kind;
 
    function Meta_Address return System.Address

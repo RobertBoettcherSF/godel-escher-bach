@@ -31,6 +31,8 @@ procedure Recursion_Smoke is
          Min_X := Integer'Min (Min_X, Integer'Min (Recursion.Segment_X1 (I), Recursion.Segment_X2 (I)));
          Max_X := Integer'Max (Max_X, Integer'Max (Recursion.Segment_X1 (I), Recursion.Segment_X2 (I)));
          Check (Recursion.Segment_Level (I) in 0 .. Depth, "level");
+         Check (Recursion.Segment_X1 (I) in 40 .. 960, "inside the frame");
+         Check (Recursion.Segment_Y1 (I) in 40 .. 960, "inside the frame");
          exit when Failures > 4;
       end loop;
       Mid := (Min_X + Max_X) / 2;
@@ -45,7 +47,7 @@ begin
    Recursion.Reset;
    Check (Recursion.Frame_Depth = 1, "starts on the outer frame");
    Check (Recursion.Tree_Depth = 5, "tree opens midway");
-   Check (Recursion.Rabbit_Terms = 0, "no rabbits yet");
+   Check (Recursion.Rabbit_Terms = 1 and then Recursion.Rabbit_Value = 1, "opens on one rabbit");
    for Step in 1 .. 5 loop
       Recursion.Deeper;
    end loop;
@@ -73,36 +75,37 @@ begin
    end;
 
    Recursion.Reset_Rabbits;
+   Check (Recursion.Rabbit_Terms = 1 and then Recursion.Rabbit_Value = 1, "starts at one");
+   Check (Recursion.Dot_Count = 1, "one dot");
    Recursion.Next_Rabbit;
-   Check (Recursion.Rabbit_Value = 1 and then Recursion.Dot_Count = 1, "first rabbit");
-   Recursion.Next_Rabbit;
-   Check (Recursion.Rabbit_Value = 1 and then Recursion.Dot_Count = 2, "second rabbit");
+   Check (Recursion.Rabbit_Value = 1 and then Recursion.Rabbit_Terms = 2, "second one");
    Recursion.Next_Rabbit;
    Check (Recursion.Rabbit_Value = 2, "two rabbits");
    Check (Recursion.Rabbit_Older = 1 and then Recursion.Rabbit_Newer = 1, "two parents");
-   for Step in 4 .. 11 loop
+   for Step in 1 .. 8 loop
       Recursion.Next_Rabbit;
    end loop;
    Check (Recursion.Rabbit_Value = 89, "eighty-nine");
    Check (Recursion.Rabbit_Older = 34 and then Recursion.Rabbit_Newer = 55, "parents of 89");
-   Check (Recursion.Dot_Count = 89, "one pile of dots");
    Reds := 0;
    Blues := 0;
    for I in 0 .. Recursion.Dot_Count - 1 loop
-      if Recursion.Dot_Color (I) = 0 then
-         Reds := Reds + 1;
-      else
-         Blues := Blues + 1;
+      if Recursion.Dot_Pile (I) = 2 then
+         if Recursion.Dot_Color (I) = 0 then
+            Reds := Reds + 1;
+         else
+            Blues := Blues + 1;
+         end if;
+         Check (Recursion.Dot_R (I) >= 10, "new pile stays big");
       end if;
-      Check (Recursion.Dot_R (I) >= 8, "dots stay visible");
       exit when Failures > 8;
    end loop;
-   Check (Reds = 34 and then Blues = 55, "the pile is the two piles before");
+   Check (Reds = 34 and then Blues = 55, "the new pile is the two piles before");
    Recursion.Next_Rabbit;
    Check (Recursion.Last_Status = Recursion.Full, "cap");
    Check (Recursion.Rabbit_Value = 89, "cap holds");
    Recursion.Reset_Rabbits;
-   Check (Recursion.Rabbit_Terms = 0 and then Recursion.Dot_Count = 0, "reset rabbits");
+   Check (Recursion.Rabbit_Terms = 1 and then Recursion.Dot_Count = 1, "reset rabbits");
 
    if Failures = 0 then
       Put_Line ("recursion smoke ok");
