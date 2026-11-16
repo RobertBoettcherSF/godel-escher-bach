@@ -19,7 +19,16 @@ package Crab is
    function Letter (Index : Natural) return Natural;
    function Is_Palindrome return Boolean;
 
+   Melody_Count : constant := 3;
+
+   type Melody is array (1 .. Max_Notes) of Natural;
+
+   procedure Retrograde (Source : Melody; Result : out Melody);
+
+   function Shown_Length return Natural;
+
    procedure Cycle_Note (Index : Natural);
+   procedure Select_Melody (Index : Natural);
    function Note (Index : Natural) return Natural;
    function Mirror_Note (Index : Natural) return Natural;
 
@@ -46,5 +55,7 @@ package Crab is
      with Export, Convention => C, External_Name => "crab_cycle_letter";
    procedure Cycle_Note_Exported (Index : Integer)
      with Export, Convention => C, External_Name => "crab_cycle_note";
+   procedure Select_Melody_Exported (Index : Integer)
+     with Export, Convention => C, External_Name => "crab_select_melody";
 
 end Crab;

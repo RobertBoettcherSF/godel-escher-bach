@@ -16,30 +16,36 @@ const another = document.getElementById("another");
 const playButton = document.getElementById("play-canon");
 
 let wasm = null;
-let starter = 0;
+let pair = 0;
+
+const DEGREE = 12;
+const UPPER_BOTTOM = 116;
+const LOWER_BOTTOM = 268;
 
 function read() {
   const exp = wasm.exports;
   const memory = exp.memory.buffer;
-  const meta = new Int32Array(memory, exp.crab_meta() >>> 0, 4);
+  const meta = new Int32Array(memory, exp.crab_meta() >>> 0, 6);
   return {
     tiles: meta[0],
     palindrome: meta[1] === 1,
     notes: meta[2],
+    melodyCount: meta[4],
+    melody: meta[5],
     letters: new Int32Array(memory, exp.crab_letters() >>> 0, 11),
     pitches: new Int32Array(memory, exp.crab_notes() >>> 0, 8),
     mirrors: new Int32Array(memory, exp.crab_mirrors() >>> 0, 8)
   };
 }
 
-function loadStarter() {
-  const lang = getLang();
-  const list = STARTERS[lang] || STARTERS.en;
-  const text = list[starter % list.length];
+function showPair() {
+  const list = STARTERS[getLang()] || STARTERS.en;
+  const text = list[pair % list.length];
   wasm.exports.crab_clear();
   for (let i = 0; i < text.length && i < 11; i += 1) {
     wasm.exports.crab_set_letter(i, text.codePointAt(i));
   }
+  wasm.exports.crab_select_melody(pair);
   draw();
 }
 
@@ -62,45 +68,40 @@ function drawLetters(state) {
   mark.setAttribute("aria-label", state.palindrome ? "Yes" : "No");
 }
 
+function pitchY(pitch, bottom) {
+  return bottom - pitch * DEGREE;
+}
+
 function noteHead(x, y, filled, index, mid) {
   const colour = filled ? "#241833" : "#c4492a";
   const up = y > mid;
-  const tip = up ? y - 28 : y + 28;
+  const tip = up ? y - 26 : y + 26;
   const top = Math.min(y, tip);
   const hit = index < 0 ? "" : ` data-note="${index}" tabindex="0" role="button"`;
   const fill = filled ? colour : "#fffdf8";
   return `<g class="note"${hit}>
-    <rect x="${x - 22}" y="${top - 12}" width="44" height="${Math.abs(tip - y) + 24}" fill="transparent"/>
-    <line x1="${x + 10}" y1="${y}" x2="${x + 10}" y2="${tip}" stroke="${colour}" stroke-width="2.5"/>
-    <ellipse cx="${x}" cy="${y}" rx="12" ry="8.5" fill="${fill}" stroke="${colour}" stroke-width="2.5"/>
+    <rect x="${x - 20}" y="${top - 10}" width="40" height="${Math.abs(tip - y) + 20}" fill="transparent"/>
+    <line x1="${x + 9}" y1="${y}" x2="${x + 9}" y2="${tip}" stroke="${colour}" stroke-width="2.4"/>
+    <ellipse cx="${x}" cy="${y}" rx="11" ry="6.5" fill="${fill}" stroke="${colour}" stroke-width="2.4"/>
   </g>`;
 }
 
 function drawStaff(state) {
-  const lines = [];
-  for (let i = 0; i < 5; i += 1) {
-    lines.push(`<line x1="56" y1="${54 + i * 16}" x2="840" y2="${54 + i * 16}" stroke="#cbbba6" stroke-width="2"/>`);
-    lines.push(`<line x1="56" y1="${190 + i * 16}" x2="840" y2="${190 + i * 16}" stroke="#cbbba6" stroke-width="2"/>`);
+  const parts = [];
+  for (const bottom of [UPPER_BOTTOM, LOWER_BOTTOM]) {
+    for (let degree = 0; degree <= 8; degree += 2) {
+      const y = bottom - degree * DEGREE;
+      parts.push(`<line x1="64" y1="${y}" x2="824" y2="${y}" stroke="#cbbba6" stroke-width="2"/>`);
+    }
   }
-  lines.push(`<text x="18" y="96" font-size="26" fill="#241833">→</text>`);
-  lines.push(`<text x="18" y="232" font-size="26" fill="#c4492a">←</text>`);
-  const heads = [];
+  parts.push(`<text x="24" y="${pitchY(4, UPPER_BOTTOM) + 8}" font-size="26" fill="#241833">→</text>`);
+  parts.push(`<text x="24" y="${pitchY(4, LOWER_BOTTOM) + 8}" font-size="26" fill="#c4492a">←</text>`);
   for (let i = 0; i < state.notes; i += 1) {
-    const x = 92 + i * 92;
-    const forward = state.pitches[i];
-    const back = state.mirrors[i];
-    const yForward = 118 - forward * 16;
-    const yBack = 254 - back * 16;
-    if (forward >= 6) {
-      heads.push(`<line x1="${x - 16}" y1="${yForward}" x2="${x + 16}" y2="${yForward}" stroke="#cbbba6" stroke-width="2"/>`);
-    }
-    if (back >= 6) {
-      heads.push(`<line x1="${x - 16}" y1="${yBack}" x2="${x + 16}" y2="${yBack}" stroke="#cbbba6" stroke-width="2"/>`);
-    }
-    heads.push(noteHead(x, yForward, true, i, 86));
-    heads.push(noteHead(x, yBack, false, -1, 222));
+    const x = 108 + i * 86;
+    parts.push(noteHead(x, pitchY(state.pitches[i], UPPER_BOTTOM), true, i, pitchY(4, UPPER_BOTTOM)));
+    parts.push(noteHead(x, pitchY(state.mirrors[i], LOWER_BOTTOM), false, -1, pitchY(4, LOWER_BOTTOM)));
   }
-  staff.innerHTML = lines.join("") + heads.join("");
+  staff.innerHTML = parts.join("");
 }
 
 function draw() {
@@ -133,9 +134,8 @@ staff.addEventListener("click", (event) => {
 });
 
 another.addEventListener("click", () => {
-  const list = STARTERS[getLang()] || STARTERS.en;
-  starter = (starter + 1) % list.length;
-  loadStarter();
+  pair += 1;
+  showPair();
   play("open");
 });
 
@@ -159,12 +159,12 @@ staff.addEventListener("keydown", (event) => {
 });
 
 window.addEventListener("languagechange", () => {
-  starter = 0;
-  if (wasm) loadStarter();
+  pair = 0;
+  if (wasm) showPair();
 });
 
-const response = await fetch("crab.wasm?v=1");
+const response = await fetch("crab.wasm?v=2");
 const {instance} = await WebAssembly.instantiate(await response.arrayBuffer());
 wasm = instance;
 wasm.exports.crab_reset();
-loadStarter();
+showPair();

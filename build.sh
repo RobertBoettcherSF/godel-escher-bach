@@ -64,7 +64,7 @@ if [ "$want" = "all" ] || [ "$want" = "crab" ]; then
   compile_module crab src/crab.adb \
     --export=crab_meta --export=crab_letters --export=crab_notes --export=crab_mirrors \
     --export=crab_reset --export=crab_clear --export=crab_set_letter \
-    --export=crab_cycle_letter --export=crab_cycle_note
+    --export=crab_cycle_letter --export=crab_cycle_note --export=crab_select_melody
 fi
 
 if [ "$want" = "all" ] || [ "$want" = "recursion" ]; then

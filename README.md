@@ -12,7 +12,7 @@ v0.4 turns figure and ground into a field of triangles that grow into birds. The
 
 v0.5 opens recursion. Frames nest, a tree branches, and rabbit dots follow the counts. That state is Ada, compiled to `recursion.wasm`. v0.5.1 lets each story open another story, with no stop in sight. v0.5.2 lets the tree and the rabbits keep growing the same way. v0.5.4 keeps the whole tree in the frame as it grows. v0.5.5 evens the pale tips along both edges.
 
-v0.6 opens the crab canon. The same line of letters and the same eight notes run forward and backward together. Reversal, the palindrome check and the mirrored pitches are Ada, compiled to `crab.wasm`.
+v0.6 opens the crab canon. The same line of letters and the same eight notes run forward and backward together. Reversal, the palindrome check and the mirrored pitches are Ada, compiled to `crab.wasm`. v0.6.1 shows only the letters of the current word, and Another moves to the next word and its tune together.
 
 English (UK), German, Spanish and French. Four further chapters are drawn as closed tiles.
 

@@ -1,5 +1,12 @@
 # Release history
 
+## v0.6.1
+
+The row matches the word, and the lower line is the tune backwards.
+
+- Letter tiles are the word itself, centred. Slots after the word are not shown. A tap still cycles a letter.
+- Another moves to the next word and the next melody together. Ada keeps one original tune for each starter word. The lower line is that tune in reverse, on the same steps of the staff.
+
 ## v0.6
 
 The same line, forward and back.
