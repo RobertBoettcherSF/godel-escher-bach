@@ -3,14 +3,35 @@ import {t} from "./i18n.js?v=1";
 import {play, playFall, playRise} from "./sounds.js?v=1";
 
 const FRAME = ["#3d5a80", "#c45c44", "#d4a017", "#1f7a64", "#6d597a", "#241833"];
-const SKY = ["#d7ebf7", "#fde7dc", "#fff4d4", "#d9f3ea", "#efe4f7", "#f6f1ea"];
-const FLOWER = `<svg class="flower" viewBox="0 0 80 110" aria-hidden="true">
-  <ellipse cx="40" cy="102" rx="26" ry="7" fill="#c4a15a"/>
-  <path d="M40 96 C40 70 18 62 14 36" fill="none" stroke="#2a9d8f" stroke-width="6" stroke-linecap="round"/>
-  <ellipse cx="18" cy="34" rx="16" ry="10" transform="rotate(-28 18 34)" fill="#81b29a"/>
-  <circle cx="46" cy="58" r="20" fill="#e9c46a"/>
-  <circle cx="46" cy="58" r="8" fill="#fff6ea"/>
-</svg>`;
+const WALL = ["#d7ebf7", "#fde7dc", "#fff4d4", "#d9f3ea", "#efe4f7", "#f6f1ea"];
+const FRAME_X = 56;
+const FRAME_Y = 8;
+const FRAME_S = 38;
+const FRAME_BAND = 3.2;
+const INNER_X = FRAME_X + FRAME_BAND;
+const INNER_Y = FRAME_Y + FRAME_BAND;
+const INNER_S = FRAME_S - FRAME_BAND * 2;
+const SUN = `<g stroke="#e39b12" stroke-width="1.6" stroke-linecap="round" fill="none">
+  <line x1="14" y1="3.4" x2="14" y2="6.4"/>
+  <line x1="14" y1="21.6" x2="14" y2="24.6"/>
+  <line x1="3.4" y1="14" x2="6.4" y2="14"/>
+  <line x1="21.6" y1="14" x2="24.6" y2="14"/>
+  <line x1="6.6" y1="6.6" x2="8.6" y2="8.6"/>
+  <line x1="19.4" y1="19.4" x2="21.4" y2="21.4"/>
+  <line x1="21.4" y1="6.6" x2="19.4" y2="8.6"/>
+  <line x1="8.6" y1="19.4" x2="6.6" y2="21.4"/>
+  <circle cx="14" cy="14" r="6.4" fill="#f6b429" stroke="none"/>
+</g>`;
+const FLOWER = `<g>
+  <line x1="28" y1="80" x2="28" y2="58" stroke="#2f7a40" stroke-width="2.8" stroke-linecap="round"/>
+  <ellipse cx="20" cy="66" rx="8" ry="3.4" transform="rotate(-42 20 66)" fill="#3e9a52"/>
+  <circle cx="16" cy="50" r="9" fill="#e23d4a"/>
+  <circle cx="40" cy="50" r="9" fill="#e23d4a"/>
+  <circle cx="20" cy="38" r="9" fill="#e23d4a"/>
+  <circle cx="36" cy="38" r="9" fill="#e23d4a"/>
+  <circle cx="28" cy="46" r="9" fill="#d62839"/>
+  <circle cx="28" cy="46" r="4.2" fill="#f0a202"/>
+</g>`;
 
 const frames = document.getElementById("frames");
 const stack = document.getElementById("stack");
@@ -47,30 +68,34 @@ function read() {
   };
 }
 
-function sceneMarkup(level) {
-  const frame = level < 6
-    ? `<div class="wall-frame" style="background:${FRAME[level]}">${sceneMarkup(level + 1)}</div>`
-    : `<div class="wall-frame blank" style="background:${FRAME[5]}"><div class="mat"></div></div>`;
-  return `<div class="scene" data-level="${level}" style="background:${SKY[level - 1]}">
-    <svg class="sun" viewBox="0 0 100 100" aria-hidden="true"><g fill="#f0a202" stroke="#f0a202" stroke-width="8" stroke-linecap="round"><line x1="50" y1="4" x2="50" y2="18"/><line x1="50" y1="82" x2="50" y2="96"/><line x1="4" y1="50" x2="18" y2="50"/><line x1="82" y1="50" x2="96" y2="50"/><line x1="16" y1="16" x2="26" y2="26"/><line x1="74" y1="74" x2="84" y2="84"/><line x1="84" y1="16" x2="74" y2="26"/><line x1="26" y1="74" x2="16" y2="84"/></g><circle cx="50" cy="50" r="26" fill="#f0a202"/></svg>
-    ${FLOWER}
-    <div class="ground"></div>
-    ${frame}
-  </div>`;
+function sceneInner(level, total) {
+  const wall = WALL[(level - 1) % WALL.length];
+  const frame = FRAME[(level - 1) % FRAME.length];
+  const picture = level >= total
+    ? `<rect x="${INNER_X}" y="${INNER_Y}" width="${INNER_S}" height="${INNER_S}" fill="${WALL[level % WALL.length]}"/>`
+    : `<svg data-level="${level + 1}" x="${INNER_X}" y="${INNER_Y}" width="${INNER_S}" height="${INNER_S}" viewBox="0 0 100 100" preserveAspectRatio="none">${sceneInner(level + 1, total)}</svg>`;
+  return `<rect width="100" height="100" fill="${wall}"/>
+    <rect x="0" y="80" width="100" height="20" fill="#e4c27a"/>
+    ${SUN}${FLOWER}
+    <line x1="8" y1="80" x2="92" y2="80" stroke="#8a5a28" stroke-width="1.6" stroke-linecap="round"/>
+    <rect x="${FRAME_X}" y="${FRAME_Y}" width="${FRAME_S}" height="${FRAME_S}" fill="${frame}"/>
+    ${picture}`;
 }
 
-let scenesReady = false;
+let builtLevels = 0;
 let shownDepth = 0;
 
 function ensureScenes() {
-  if (scenesReady) return;
-  frames.innerHTML = `<div class="story-stage"><div class="scene-cam">${sceneMarkup(1)}</div></div>`;
-  scenesReady = true;
+  const count = 10;
+  if (builtLevels === count && frames.querySelector(".scene-root")) return;
+  frames.innerHTML = `<div class="story-stage"><div class="scene-cam"><svg class="scene-root" data-level="1" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${sceneInner(1, count)}</svg></div></div>`;
+  builtLevels = count;
+  shownDepth = 0;
 }
 
 function zoomTransform(depth) {
   const cam = frames.querySelector(".scene-cam");
-  const scene = frames.querySelector(`.scene[data-level="${depth}"]`);
+  const scene = frames.querySelector(`svg[data-level="${depth}"]`);
   cam.style.transition = "none";
   cam.style.transform = "none";
   const camBox = cam.getBoundingClientRect();
@@ -244,6 +269,11 @@ next.addEventListener("click", () => {
   if (state.error === 0) playRise(state.terms);
   else play("no");
   show(state);
+});
+
+window.addEventListener("resize", () => {
+  if (!wasm || shownDepth < 1) return;
+  applyZoom(shownDepth, false);
 });
 
 document.getElementById("rabbit-reset").addEventListener("click", () => {

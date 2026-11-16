@@ -405,52 +405,22 @@ footer {
 .level-stack li.here { outline: 3px solid #241833; outline-offset: 3px; }
 .frame-box {
   width: min(100%, 560px);
-  aspect-ratio: 1;
+  margin-inline: auto;
+  position: relative;
+}
+.frame-box::before {
+  content: "";
+  display: block;
+  padding-top: 100%;
 }
 .story-stage {
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  inset: 0;
   overflow: hidden;
   border-radius: 28px;
 }
-.scene-cam { position: relative; width: 100%; height: 100%; transform-origin: 0 0; }
-.scene { position: absolute; inset: 0; overflow: hidden; }
-.wall-frame > .scene { inset: 8%; }
-.sun {
-  position: absolute;
-  left: 5%;
-  top: 5%;
-  width: 16%;
-  height: auto;
-}
-.ground {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 16%;
-  background: #e6c98a;
-  border-top: 5px solid #b8893d;
-}
-.flower {
-  position: absolute;
-  left: 6%;
-  bottom: 7%;
-  width: 38%;
-  height: 62%;
-}
-.wall-frame {
-  position: absolute;
-  left: 54%;
-  top: 9%;
-  width: 38%;
-  aspect-ratio: 1;
-  height: auto;
-  background: #6b3e26;
-  border-radius: 4%;
-  overflow: hidden;
-}
-.wall-frame.blank .mat { width: 100%; height: 100%; background: #fff6ea; border-radius: 2%; }
+.scene-cam { position: absolute; inset: 0; transform-origin: 0 0; }
+.scene-root { display: block; width: 100%; height: 100%; }
 #tree, #rabbits {
   width: min(100%, 720px);
   margin: 0 auto;
