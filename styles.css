@@ -547,6 +547,87 @@ footer {
   }
   .language-flags button { position: relative; min-width: 44px; padding-inline: 10px; }
 }
+.canon-lead, .rec-part h2 { text-align: center; }
+.letter-row {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin: 8px auto 0;
+  max-width: 640px;
+}
+.letter {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 52px;
+  min-height: 48px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--card);
+  font-weight: 800;
+  font-size: clamp(0.85rem, 3.2vw, 1.2rem);
+  line-height: 1;
+}
+.letter.is-gap { color: #cbbba6; }
+.canon-mark {
+  margin: 10px 0 0;
+  text-align: center;
+  font-size: 2.4rem;
+  font-weight: 800;
+  line-height: 1;
+}
+.canon-mark.yes { color: #1f7a4a; }
+.canon-mark.no { color: #c4492a; }
+.staff {
+  width: min(100%, 880px);
+  margin: 0 auto;
+  display: block;
+  background: #fffdf8;
+  border: 1px solid var(--line);
+  border-radius: 28px;
+}
+.staff .note { cursor: pointer; }
+.crab-stage {
+  --crab-w: 108px;
+  position: relative;
+  height: 150px;
+  margin: 0 auto;
+  max-width: 720px;
+  overflow: hidden;
+  border-radius: 28px;
+  background: linear-gradient(#fffdf8, #ffe8c4);
+  border: 1px solid var(--line);
+}
+.crab-stage::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 16px;
+  background: #f0c9a0;
+}
+.crab {
+  position: absolute;
+  bottom: 12px;
+  width: var(--crab-w);
+  z-index: 1;
+}
+.crab svg { display: block; width: 100%; height: auto; }
+.crab.a { animation: crab-right 7s ease-in-out infinite alternate; }
+.crab.b { animation: crab-left 7s ease-in-out infinite alternate; transform: scaleX(-1); }
+@keyframes crab-right {
+  from { left: 4%; }
+  to { left: calc(100% - var(--crab-w) - 4%); }
+}
+@keyframes crab-left {
+  from { left: calc(100% - var(--crab-w) - 4%); }
+  to { left: 4%; }
+}
+@media (max-width: 520px) {
+  .letter-row { gap: 3px; }
+  .crab-stage { --crab-w: 84px; height: 128px; }
+}
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
@@ -554,4 +635,7 @@ footer {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+  .crab { animation: none !important; }
+  .crab.a { left: 8%; }
+  .crab.b { left: auto; right: 8%; }
 }

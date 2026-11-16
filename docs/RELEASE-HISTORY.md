@@ -1,5 +1,13 @@
 # Release history
 
+## v0.6
+
+The same line, forward and back.
+
+- Letter tiles read from either end. A tap cycles a letter. Ada says whether the row is a palindrome, ignoring case, spaces and punctuation, and folding accented letters.
+- Eight notes sit on two staves. Play sounds the line and its reverse together. A tap changes a pitch, and Ada updates the mirrored voice.
+- Two crabs walk toward each other, pass, and swap ends. Reduced motion keeps them still.
+
 ## v0.5.5
 
 The pale leaf tips run along both edges of the canopy.
