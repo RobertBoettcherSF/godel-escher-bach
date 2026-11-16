@@ -1,5 +1,11 @@
 # Release history
 
+## v0.5.3
+
+The tree keeps zooming.
+
+- Each tap after the tenth zooms about one and a half times into the right-hand branch. Twigs become limbs, new twigs appear at the edge, and the base of the view is a green-brown limb. Back steps out. Reset returns to the trunk.
+
 ## v0.5.2
 
 The tree and the rabbits keep going.

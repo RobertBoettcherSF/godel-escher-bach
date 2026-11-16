@@ -26,7 +26,9 @@ package body Recursion is
    Work_Level : array (0 .. Max_Segments - 1) of Integer := (others => 0);
    Work_N : Natural := 0;
 
-   Meta : array (1 .. 12) of Integer := (others => 0);
+   Meta : array (1 .. 14) of Integer := (others => 0);
+   Fit_Scale, Fit_Ox, Fit_Oy : Float := 1.0;
+   Focus_X, Focus_Y : Integer := 500;
 
    Wobble : constant array (0 .. 6) of Float :=
      (0.0, 1.6, -0.9, 1.2, -0.4, 0.8, -1.1);
@@ -77,6 +79,8 @@ package body Recursion is
       Meta (10) := Code (Status);
       Meta (11) := Draw_Depth;
       Meta (12) := Unit_Exp;
+      Meta (13) := Focus_X;
+      Meta (14) := Focus_Y;
    end Publish;
 
    procedure Sin_Cos (Radians : Float; Sine, Cosine : out Float) is
@@ -158,6 +162,9 @@ package body Recursion is
       Offset_X := 500.0 - (Min_X + Max_X) * 0.5 * Scale;
       --  The trunk base sits about 8% up from the bottom of the frame.
       Offset_Y := 80.0 - Min_Y * Scale;
+      Fit_Scale := Scale;
+      Fit_Ox := Offset_X;
+      Fit_Oy := Offset_Y;
       Seg_N := Work_N;
       for I in 0 .. Work_N - 1 loop
          Segs (I * 5) := Integer (Work_X1 (I) * Scale + Offset_X);
@@ -168,19 +175,238 @@ package body Recursion is
       end loop;
    end Fit_Tree;
 
-   procedure Grow_Tree is
-      Base : Natural;
+   procedure Remember_Fit (Min_X, Max_X, Min_Y, Max_Y : Float) is
+      Span : Float;
    begin
-      if Branches <= Visible_Cap then
-         Base := 0;
-         Draw_Depth := Branches;
-      else
-         Base := Branches - Visible_Cap;
-         Draw_Depth := Visible_Cap;
+      Span := Float'Min (840.0 / (Max_X - Min_X), 840.0 / (Max_Y - Min_Y));
+      Fit_Scale := Span;
+      Fit_Ox := 500.0 - (Min_X + Max_X) * 0.5 * Span;
+      Fit_Oy := 80.0 - Min_Y * Span;
+   end Remember_Fit;
+
+   procedure Measure
+     (X, Y, Angle, Length : Float;
+      Level : Natural;
+      Factor : Float;
+      Min_X, Max_X, Min_Y, Max_Y : in out Float)
+   is
+      Sine, Cosine, X2, Y2, Spread, Next : Float;
+   begin
+      Sin_Cos (Angle, Sine, Cosine);
+      X2 := X + Cosine * Length;
+      Y2 := Y + Sine * Length;
+      Min_X := Float'Min (Min_X, Float'Min (X, X2));
+      Max_X := Float'Max (Max_X, Float'Max (X, X2));
+      Min_Y := Float'Min (Min_Y, Float'Min (Y, Y2));
+      Max_Y := Float'Max (Max_Y, Float'Max (Y, Y2));
+      if Level = Visible_Cap then
+         return;
       end if;
+      Spread := (22.0 + Wobble (Level mod 7)) * Factor * Pi / 180.0;
+      Next := (if Level = 0 then 0.85 else Length * 0.66);
+      Measure (X2, Y2, Angle + Spread, Next, Level + 1, Factor * 0.97,
+               Min_X, Max_X, Min_Y, Max_Y);
+      Measure (X2, Y2, Angle - Spread, Next, Level + 1, Factor * 0.97,
+               Min_X, Max_X, Min_Y, Max_Y);
+   end Measure;
+
+   procedure Lock_Fit is
+      Min_X, Max_X, Min_Y, Max_Y : Float;
+   begin
+      Min_X := 0.0;
+      Max_X := 0.0;
+      Min_Y := 0.0;
+      Max_Y := 0.0;
+      Measure (0.0, 0.0, Pi / 2.0, 0.38, 0, 1.0, Min_X, Max_X, Min_Y, Max_Y);
+      if Max_X - Min_X < 0.8 then
+         Min_X := Min_X - 0.4;
+         Max_X := Max_X + 0.4;
+      end if;
+      Remember_Fit (Min_X, Max_X, Min_Y, Max_Y);
+   end Lock_Fit;
+
+   procedure Map_Screen (X, Y : Float; SX, SY : out Integer; Half, Min_X, Min_Y : Float) is
+      T : Float;
+   begin
+      T := (X - Min_X) / (2.0 * Half) * 1000.0;
+      if T < -4000.0 then
+         T := -4000.0;
+      elsif T > 5000.0 then
+         T := 5000.0;
+      end if;
+      SX := Integer (T);
+      T := (Y - Min_Y) / (2.0 * Half) * 1000.0;
+      if T < -4000.0 then
+         T := -4000.0;
+      elsif T > 5000.0 then
+         T := 5000.0;
+      end if;
+      SY := Integer (T);
+   end Map_Screen;
+
+   procedure Grow_Zoom (Zoom_Steps : Natural) is
+      Half, Spread, Next, Sine, Cosine : Float;
+      X, Y, Angle, Length, Factor : Float;
+      Level : Natural;
+      Start_X, Start_Y, End_X, End_Y : Float;
+      Aim_X, Aim_Y, Cam_Min_X, Cam_Min_Y : Float;
+
+      function Fitted_X (Value : Float) return Float is (Value * Fit_Scale + Fit_Ox);
+      function Fitted_Y (Value : Float) return Float is (Value * Fit_Scale + Fit_Oy);
+
+      function Near_Camera (WX, WY, Reach : Float) return Boolean is
+         FX : constant Float := Fitted_X (WX);
+         FY : constant Float := Fitted_Y (WY);
+         Pad : constant Float := Reach * Fit_Scale + Half * 0.35;
+      begin
+         return FX + Pad >= Aim_X - Half
+           and then FX - Pad <= Aim_X + Half
+           and then FY + Pad >= Aim_Y - Half
+           and then FY - Pad <= Aim_Y + Half;
+      end Near_Camera;
+
+      function Seen (X1, Y1, X2, Y2 : Float) return Boolean is
+         A : constant Float := Fitted_X (X1);
+         B : constant Float := Fitted_Y (Y1);
+         C : constant Float := Fitted_X (X2);
+         D : constant Float := Fitted_Y (Y2);
+         Pad : constant Float := Half * 0.2;
+      begin
+         return Float'Max (A, C) >= Aim_X - Half - Pad
+           and then Float'Min (A, C) <= Aim_X + Half + Pad
+           and then Float'Max (B, D) >= Aim_Y - Half - Pad
+           and then Float'Min (B, D) <= Aim_Y + Half + Pad;
+      end Seen;
+
+      procedure Emit
+        (WX, WY, Heading, Span, Weight : Float;
+         Depth : Natural)
+      is
+         EX, EY : Float;
+         S1, S2, E1, E2 : Integer;
+         Child, Reach, Child_Len : Float;
+      begin
+         Sin_Cos (Heading, Sine, Cosine);
+         EX := WX + Cosine * Span;
+         EY := WY + Sine * Span;
+         if Work_N < Max_Segments and then Seen (WX, WY, EX, EY) then
+            Map_Screen (Fitted_X (WX), Fitted_Y (WY), S1, S2, Half, Cam_Min_X, Cam_Min_Y);
+            Map_Screen (Fitted_X (EX), Fitted_Y (EY), E1, E2, Half, Cam_Min_X, Cam_Min_Y);
+            Work_X1 (Work_N) := Float (S1);
+            Work_Y1 (Work_N) := Float (S2);
+            Work_X2 (Work_N) := Float (E1);
+            Work_Y2 (Work_N) := Float (E2);
+            Work_Level (Work_N) := Depth;
+            Work_N := Work_N + 1;
+         end if;
+         if Depth = Branches then
+            return;
+         end if;
+         Reach := (if Depth = 0 then 0.85 else Span * 0.66) / 0.28;
+         if not Near_Camera (EX, EY, Reach) then
+            return;
+         end if;
+         Child := (22.0 + Wobble (Depth mod 7)) * Weight * Pi / 180.0;
+         Child_Len := (if Depth = 0 then 0.85 else Span * 0.66);
+         Emit (EX, EY, Heading + Child, Child_Len, Weight * 0.97, Depth + 1);
+         Emit (EX, EY, Heading - Child, Child_Len, Weight * 0.97, Depth + 1);
+      end Emit;
+   begin
+      X := 0.0;
+      Y := 0.0;
+      Angle := Pi / 2.0;
+      Length := 0.38;
+      Factor := 1.0;
+      Level := 0;
+      Sin_Cos (Angle, Sine, Cosine);
+      End_X := X + Cosine * Length;
+      End_Y := Y + Sine * Length;
+      Start_X := X;
+      Start_Y := Y;
+      X := End_X;
+      Y := End_Y;
+      for Step in 1 .. Zoom_Steps loop
+         Spread := (22.0 + Wobble (Level mod 7)) * Factor * Pi / 180.0;
+         Next := (if Level = 0 then 0.85 else Length * 0.66);
+         Angle := Angle - Spread;
+         Factor := Factor * 0.97;
+         Length := Next;
+         Level := Level + 1;
+         Start_X := X;
+         Start_Y := Y;
+         Sin_Cos (Angle, Sine, Cosine);
+         X := X + Cosine * Length;
+         Y := Y + Sine * Length;
+      end loop;
+      End_X := X;
+      End_Y := Y;
+      --  About 1.6 times closer each tap: the window tracks the branch,
+      --  which itself shortens by about two thirds.
+      Half := Length * Fit_Scale * 1.35;
+      if Half < 8.0 then
+         Half := 8.0;
+      end if;
+      Aim_X := Fitted_X (End_X) - (End_X - Start_X) / Length * Half * 0.42;
+      Aim_Y := Fitted_Y (End_Y) - (End_Y - Start_Y) / Length * Half * 0.42;
+      Cam_Min_X := Aim_X - Half;
+      Cam_Min_Y := Aim_Y - Half;
+      Draw_Depth := Zoom_Steps;
       Work_N := 0;
-      Branch (0.0, 0.0, Pi / 2.0, 0.38, 0, Base, 1.0);
-      Fit_Tree;
+      Emit (0.0, 0.0, Pi / 2.0, 0.38, 1.0, 0);
+      if Work_N = 0 then
+         Emit (Start_X, Start_Y, Angle, Length, Factor, Level);
+      end if;
+      Seg_N := Work_N;
+      for I in 0 .. Work_N - 1 loop
+         Segs (I * 5) := Integer (Work_X1 (I));
+         Segs (I * 5 + 1) := Integer (Work_Y1 (I));
+         Segs (I * 5 + 2) := Integer (Work_X2 (I));
+         Segs (I * 5 + 3) := Integer (Work_Y2 (I));
+         Segs (I * 5 + 4) := Work_Level (I);
+      end loop;
+      Map_Screen (Fitted_X (End_X), Fitted_Y (End_Y), Focus_X, Focus_Y, Half, Cam_Min_X, Cam_Min_Y);
+   end Grow_Zoom;
+
+   procedure Note_Focus (Zoom_Steps : Natural) is
+      X, Y, Angle, Length, Factor, Spread, Next, Sine, Cosine : Float;
+      Level : Natural;
+   begin
+      X := 0.0;
+      Y := 0.0;
+      Angle := Pi / 2.0;
+      Length := 0.38;
+      Factor := 1.0;
+      Level := 0;
+      Sin_Cos (Angle, Sine, Cosine);
+      X := X + Cosine * Length;
+      Y := Y + Sine * Length;
+      for Step in 1 .. Zoom_Steps loop
+         Spread := (22.0 + Wobble (Level mod 7)) * Factor * Pi / 180.0;
+         Next := (if Level = 0 then 0.85 else Length * 0.66);
+         Angle := Angle - Spread;
+         Factor := Factor * 0.97;
+         Length := Next;
+         Level := Level + 1;
+         Sin_Cos (Angle, Sine, Cosine);
+         X := X + Cosine * Length;
+         Y := Y + Sine * Length;
+      end loop;
+      Focus_X := Integer (X * Fit_Scale + Fit_Ox);
+      Focus_Y := Integer (Y * Fit_Scale + Fit_Oy);
+   end Note_Focus;
+
+   procedure Grow_Tree is
+   begin
+      Lock_Fit;
+      if Branches <= Visible_Cap then
+         Draw_Depth := Branches;
+         Work_N := 0;
+         Branch (0.0, 0.0, Pi / 2.0, 0.38, 0, 0, 1.0);
+         Fit_Tree;
+         Note_Focus (1);
+      else
+         Grow_Zoom (Branches - Visible_Cap);
+      end if;
    end Grow_Tree;
 
    procedure Clear_Span (Start : Natural) is

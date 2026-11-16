@@ -66,18 +66,40 @@ begin
    Check_Tree (5);
    Check_Tree (10);
    Check (Recursion.Tree_Visible = 10, "ten splits fill the frame");
-   Recursion.Set_Tree (12);
-   Check (Recursion.Tree_Depth = 12, "past the dense cap");
-   Check (Recursion.Segment_Count = Expected_Segments (10), "only the visible branches");
-   Check (Recursion.Tree_Visible = 10, "zoom keeps ten splits");
-   Recursion.Set_Tree (20);
-   Check (Recursion.Tree_Depth = 20, "twenty splits");
-   Check (Recursion.Segment_Count = Expected_Segments (10), "still the visible branches");
    declare
-      First_X : constant Integer := Recursion.Segment_X2 (3);
+      X10, Y10, X11, Y11, X12, X15 : Integer;
+      Deep : Boolean := False;
    begin
+      X10 := Recursion.Segment_X1 (0);
+      Y10 := Recursion.Segment_Y1 (0);
+      Recursion.Set_Tree (11);
+      Check (Recursion.Segment_Count in 8 .. 2047, "eleven stays drawable");
+      Check
+        (Recursion.Segment_X1 (0) /= X10 or else Recursion.Segment_Y1 (0) /= Y10,
+         "eleven moves");
+      X11 := Recursion.Segment_X2 (0);
+      Y11 := Recursion.Segment_Y2 (0);
+      Recursion.Set_Tree (12);
+      Check
+        (Recursion.Segment_X2 (0) /= X11 or else Recursion.Segment_Y2 (0) /= Y11,
+         "twelve moves");
+      X12 := Recursion.Segment_X1 (0);
+      Recursion.Set_Tree (15);
+      Check (Recursion.Segment_X1 (0) /= X12, "fifteen moves");
+      X15 := Recursion.Segment_X1 (0);
       Recursion.Set_Tree (20);
-      Check (Recursion.Segment_X2 (3) = First_X, "the tree repeats");
+      Check (Recursion.Segment_X1 (0) /= X15, "twenty moves");
+      Check (Recursion.Segment_Count in 8 .. 2047, "twenty stays drawable");
+      for I in 0 .. Recursion.Segment_Count - 1 loop
+         if Recursion.Segment_Level (I) >= 12 then
+            Deep := True;
+         end if;
+      end loop;
+      Check (Deep, "deep twigs exist");
+      Check (Recursion.Segment_Level (0) > 0, "the base is a limb");
+      X15 := Recursion.Segment_X2 (3);
+      Recursion.Set_Tree (20);
+      Check (Recursion.Segment_X2 (3) = X15, "the tree repeats");
    end;
    Recursion.Set_Tree (0);
    Check (Recursion.Tree_Depth = 0 and then Recursion.Segment_Count = 1, "reset to the trunk");

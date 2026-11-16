@@ -58,7 +58,7 @@ function placesText(places, which, len) {
 function read() {
   const exp = wasm.exports;
   const memory = exp.memory.buffer;
-  const meta = new Int32Array(memory, exp.recursion_meta() >>> 0, 12);
+  const meta = new Int32Array(memory, exp.recursion_meta() >>> 0, 14);
   const segments = meta[3];
   const dots = meta[8];
   const valueLen = meta[5];
@@ -69,6 +69,8 @@ function read() {
     depth: meta[0],
     tree: meta[2],
     visible: meta[10],
+    focusX: meta[12],
+    focusY: meta[13],
     segments,
     terms: meta[4],
     valueLen,
@@ -165,46 +167,28 @@ function drawTree(state) {
   for (let i = 0; i < state.segments; i += 1) {
     const base = i * 5;
     const level = state.seg[base + 4];
-    const mix = visible === 0 ? 0 : level / visible;
+    const x1 = state.seg[base];
+    const y1 = 1000 - state.seg[base + 1];
+    const x2 = state.seg[base + 2];
+    const y2 = 1000 - state.seg[base + 3];
+    const span = Math.max(state.tree - visible, 1);
+    const mix = state.tree <= 10
+      ? (visible === 0 ? 0 : level / visible)
+      : 0.42 + 0.58 * Math.min(1, Math.max(0, (level - visible) / span));
     const channel = (from, to) => Math.round(from + (to - from) * mix);
-    const width = Math.max(2.2, 36 * 0.66 ** level);
+    const length = Math.hypot(x2 - x1, y2 - y1);
+    const width = state.tree <= 10
+      ? Math.max(2.2, 36 * 0.66 ** level)
+      : Math.max(2.8, Math.min(48, length * 0.12));
     const colour = `rgb(${channel(107, 47)} ${channel(62, 122)} ${channel(38, 64)})`;
     parts.push(
-      `<line x1="${state.seg[base]}" y1="${1000 - state.seg[base + 1]}" x2="${state.seg[base + 2]}" y2="${1000 - state.seg[base + 3]}" stroke="${colour}" stroke-width="${width.toFixed(1)}" stroke-linecap="round"/>`
+      `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${colour}" stroke-width="${width.toFixed(1)}" stroke-linecap="round"/>`
     );
   }
   tree.innerHTML = `<g id="tree-cam">${parts.join("")}</g>`;
   treeN.textContent = String(state.tree);
   treeBack.classList.toggle("is-dim", state.tree <= 0);
   treeBack.setAttribute("aria-disabled", state.tree <= 0 ? "true" : "false");
-}
-
-function subtreeBox(state) {
-  const leftCount = 2 ** state.visible - 1;
-  let minX = Infinity;
-  let maxX = -Infinity;
-  let minY = Infinity;
-  let maxY = -Infinity;
-  const last = Math.min(leftCount, state.segments - 1);
-  for (let i = 1; i <= last; i += 1) {
-    const base = i * 5;
-    const xs = [state.seg[base], state.seg[base + 2]];
-    const ys = [1000 - state.seg[base + 1], 1000 - state.seg[base + 3]];
-    minX = Math.min(minX, xs[0], xs[1]);
-    maxX = Math.max(maxX, xs[0], xs[1]);
-    minY = Math.min(minY, ys[0], ys[1]);
-    maxY = Math.max(maxY, ys[0], ys[1]);
-  }
-  return {minX, maxX, minY, maxY};
-}
-
-function frameZoom(box) {
-  const bw = Math.max(1, box.maxX - box.minX);
-  const bh = Math.max(1, box.maxY - box.minY);
-  const scale = 840 / Math.max(bw, bh);
-  const cx = (box.minX + box.maxX) / 2;
-  const cy = (box.minY + box.maxY) / 2;
-  return {tx: 500 - cx * scale, ty: 500 - cy * scale, scale};
 }
 
 function animateTree(from, to, done) {
@@ -401,10 +385,11 @@ function growTree() {
     return;
   }
   playRise(state.tree);
-  if (before.tree >= 10 && before.visible >= 2 && !motionOff()) {
+  if (before.tree >= 10 && !motionOff()) {
+    const fx = before.focusX;
+    const fy = 1000 - before.focusY;
     treeSliding = true;
-    const zoom = frameZoom(subtreeBox(before));
-    animateTree({tx: 0, ty: 0, scale: 1}, zoom, () => {
+    animateTree({tx: 0, ty: 0, scale: 1}, {tx: fx * (1 - 1.6), ty: fy * (1 - 1.6), scale: 1.6}, () => {
       drawTree(state);
       treeSliding = false;
     });
@@ -424,12 +409,14 @@ function backTree() {
   const state = read();
   playFall(before.tree);
   drawTree(state);
-  if (before.tree > 10 && state.visible >= 2 && !motionOff()) {
-    const zoom = frameZoom(subtreeBox(state));
+  if (before.tree > 10 && !motionOff()) {
+    const fx = state.focusX;
+    const fy = 1000 - state.focusY;
     const cam = tree.querySelector("#tree-cam");
-    cam.setAttribute("transform", `translate(${zoom.tx} ${zoom.ty}) scale(${zoom.scale})`);
+    const from = {tx: fx * (1 - 1.6), ty: fy * (1 - 1.6), scale: 1.6};
+    cam.setAttribute("transform", `translate(${from.tx} ${from.ty}) scale(${from.scale})`);
     treeSliding = true;
-    animateTree(zoom, {tx: 0, ty: 0, scale: 1}, () => {
+    animateTree(from, {tx: 0, ty: 0, scale: 1}, () => {
       cam.removeAttribute("transform");
       treeSliding = false;
     });
@@ -483,7 +470,7 @@ document.getElementById("rabbit-reset").addEventListener("click", () => {
   draw();
 });
 
-const response = await fetch("recursion.wasm?v=4");
+const response = await fetch("recursion.wasm?v=5");
 const {instance} = await WebAssembly.instantiate(await response.arrayBuffer());
 wasm = instance;
 wasm.exports.recursion_reset();
