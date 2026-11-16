@@ -74,6 +74,7 @@ if [ "$want" = "all" ] || [ "$want" = "ant" ]; then
     --export=ant_meta --export=ant_x --export=ant_y --export=ant_carry \
     --export=ant_trail --export=ant_food --export=ant_cluster \
     --export=ant_sum_x --export=ant_sum_y --export=ant_motif --export=ant_voice \
+    --export=ant_head --export=ant_outline \
     --export=ant_reset --export=ant_step --export=ant_drop --export=ant_set_beat
 fi
 

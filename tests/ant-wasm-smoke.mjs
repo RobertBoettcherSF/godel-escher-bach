@@ -8,7 +8,7 @@ const e = instance.exports;
 
 function read() {
   const memory = e.memory.buffer;
-  const meta = new Int32Array(memory, e.ant_meta() >>> 0, 18);
+  const meta = new Int32Array(memory, e.ant_meta() >>> 0, 19);
   const count = meta[0];
   const width = meta[1];
   const height = meta[2];
@@ -25,6 +25,7 @@ function read() {
     motifN,
     loopN: meta[11],
     beat: meta[12],
+    scale: meta[18],
     x: new Int32Array(memory, e.ant_x() >>> 0, count),
     y: new Int32Array(memory, e.ant_y() >>> 0, count),
     trail: new Int32Array(memory, e.ant_trail() >>> 0, width * height),
@@ -38,8 +39,8 @@ function checkWorld(st) {
   assert.equal(st.count, 150);
   let sum = 0;
   for (let i = 0; i < st.count; i += 1) {
-    assert.ok(st.x[i] >= 0 && st.x[i] < st.width);
-    assert.ok(st.y[i] >= 0 && st.y[i] < st.height);
+    assert.ok(st.x[i] >= 0 && st.x[i] < st.width * st.scale);
+    assert.ok(st.y[i] >= 0 && st.y[i] < st.height * st.scale);
   }
   for (let i = 0; i < st.trail.length; i += 1) {
     assert.ok(st.trail[i] >= 0 && st.trail[i] <= st.trailMax);

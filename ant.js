@@ -23,7 +23,7 @@ let playFrame = 0;
 function read() {
   const exp = wasm.exports;
   const memory = exp.memory.buffer;
-  const meta = new Int32Array(memory, exp.ant_meta() >>> 0, 18);
+  const meta = new Int32Array(memory, exp.ant_meta() >>> 0, 19);
   const count = meta[0];
   const width = meta[1];
   const height = meta[2];
@@ -50,8 +50,10 @@ function read() {
     symY: meta[15],
     symRX: meta[16],
     symRY: meta[17],
+    scale: meta[18] || 256,
     x: new Int32Array(memory, exp.ant_x() >>> 0, count),
     y: new Int32Array(memory, exp.ant_y() >>> 0, count),
+    head: new Int32Array(memory, exp.ant_head() >>> 0, count),
     carry: new Int32Array(memory, exp.ant_carry() >>> 0, count),
     trail: new Int32Array(memory, exp.ant_trail() >>> 0, cells),
     meals: new Int32Array(memory, exp.ant_food() >>> 0, cells),
@@ -59,7 +61,8 @@ function read() {
     sumX: new Int32Array(memory, exp.ant_sum_x() >>> 0, clusters),
     sumY: new Int32Array(memory, exp.ant_sum_y() >>> 0, clusters),
     motif: new Int32Array(memory, exp.ant_motif() >>> 0, motifN),
-    voice: new Int32Array(memory, exp.ant_voice() >>> 0, voices * 3)
+    voice: new Int32Array(memory, exp.ant_voice() >>> 0, voices * 3),
+    outline: new Int32Array(memory, exp.ant_outline() >>> 0, 16)
   };
 }
 
@@ -73,77 +76,194 @@ function cellOf(state, px, py) {
   };
 }
 
-function drawColony(state) {
-  const w = canvas.width;
-  const h = canvas.height;
-  const cw = w / state.width;
-  const ch = h / state.height;
-  ctx.clearRect(0, 0, w, h);
-  ctx.fillStyle = "#fffdf8";
-  ctx.fillRect(0, 0, w, h);
-
+function drawHaze(state, cw, ch) {
   for (let i = 0; i < state.trail.length; i += 1) {
     const strength = state.trail[i];
     if (strength <= 0) continue;
     const x = i % state.width;
     const y = Math.floor(i / state.width);
-    ctx.fillStyle = `rgba(44, 107, 237, ${0.08 + (strength / state.trailMax) * 0.55})`;
-    ctx.fillRect(x * cw, y * ch, cw + 0.5, ch + 0.5);
-  }
-
-  for (let i = 0; i < state.meals.length; i += 1) {
-    if (state.meals[i] <= 0) continue;
-    const x = i % state.width;
-    const y = Math.floor(i / state.width);
-    ctx.fillStyle = "#f0a202";
+    ctx.fillStyle = `rgba(176, 98, 32, ${0.12 + (strength / state.trailMax) * 0.62})`;
     ctx.beginPath();
-    ctx.arc((x + 0.5) * cw, (y + 0.5) * ch, Math.min(cw, ch) * 0.28, 0, Math.PI * 2);
+    ctx.arc((x + 0.5) * cw, (y + 0.5) * ch, Math.max(cw, ch) * 0.62, 0, Math.PI * 2);
     ctx.fill();
   }
+}
 
-  ctx.fillStyle = "#8a3b1a";
-  ctx.fillRect(state.nestX * cw + cw * 0.2, state.nestY * ch + ch * 0.2, cw * 0.6, ch * 0.6);
+function drawNest(cx, cy, s) {
+  ctx.fillStyle = "#c4a574";
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, s * 1.35, s * 0.85, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#5c3a1e";
+  ctx.beginPath();
+  ctx.ellipse(cx, cy + s * 0.08, s * 0.42, s * 0.3, 0, 0, Math.PI * 2);
+  ctx.fill();
+}
 
+function drawCrumbs(cx, cy, s) {
+  ctx.fillStyle = "#6f8f3a";
+  ctx.beginPath();
+    ctx.ellipse(cx, cy, s * 0.85, s * 0.4, -0.7, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#d98a2b";
+  [[-0.38, 0.28], [0.34, 0.22], [0.02, -0.36]].forEach(([ox, oy]) => {
+    ctx.beginPath();
+    ctx.arc(cx + ox * s, cy + oy * s, s * 0.13, 0, Math.PI * 2);
+    ctx.fill();
+  });
+}
+
+function drawAnt(px, py, heading, carry, s) {
+  const ang = heading * Math.PI / 4;
+  const ux = Math.cos(ang);
+  const uy = Math.sin(ang);
+  const vx = -uy;
+  const vy = ux;
+  ctx.strokeStyle = "#241833";
+  ctx.lineWidth = Math.max(1, s * 0.07);
+  const mx = px - ux * s * 0.05;
+  const my = py - uy * s * 0.05;
+  [-1, 1].forEach((side) => {
+    [-0.35, 0.12, 0.5].forEach((t) => {
+      ctx.beginPath();
+      ctx.moveTo(mx + ux * s * t, my + uy * s * t);
+      ctx.lineTo(mx + ux * s * t + vx * s * 0.48 * side, my + uy * s * t + vy * s * 0.48 * side);
+      ctx.stroke();
+    });
+  });
+  ctx.fillStyle = "#241833";
+  [[-0.5, 0.34], [0.05, 0.26], [0.55, 0.2]].forEach(([t, r]) => {
+    ctx.beginPath();
+    ctx.ellipse(px + ux * s * t, py + uy * s * t, s * r, s * r * 0.7, ang, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  if (carry) {
+    ctx.fillStyle = "#e0a040";
+    ctx.beginPath();
+    ctx.arc(px + ux * s * 0.78, py + uy * s * 0.78, s * 0.14, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function trailHull(state) {
+  const pts = [];
+  for (let i = 0; i < state.trail.length; i += 1) {
+    if (state.trail[i] < 4) continue;
+    pts.push([i % state.width + 0.5, Math.floor(i / state.width) + 0.5]);
+  }
+  pts.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  if (pts.length < 3) return pts;
+  const cross = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+  const lower = [];
+  pts.forEach((p) => {
+    while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], p) <= 0) lower.pop();
+    lower.push(p);
+  });
+  const upper = [];
+  for (let i = pts.length - 1; i >= 0; i -= 1) {
+    const p = pts[i];
+    while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], p) <= 0) upper.pop();
+    upper.push(p);
+  }
+  lower.pop();
+  upper.pop();
+  return lower.concat(upper);
+}
+
+function drawOutline(state, cw, ch) {
+  const hull = trailHull(state);
+  let cx = (state.nestX + 0.5) * cw;
+  let cy = (state.nestY + 0.5) * ch;
+  const points = [];
+  if (hull.length >= 3) {
+    let sx = 0;
+    let sy = 0;
+    hull.forEach(([x, y]) => {
+      sx += x;
+      sy += y;
+    });
+    cx = (sx / hull.length) * cw;
+    cy = (sy / hull.length) * ch;
+    hull.forEach(([x, y]) => {
+      const px = x * cw;
+      const py = y * ch;
+      const dx = px - cx;
+      const dy = py - cy;
+      const len = Math.hypot(dx, dy) || 1;
+      const pad = Math.min(cw, ch) * 0.85;
+      points.push([px + (dx / len) * pad, py + (dy / len) * pad]);
+    });
+  } else {
+    for (let i = 0; i < 8; i += 1) {
+      const ang = (i / 8) * Math.PI * 2;
+      points.push([cx + Math.cos(ang) * cw * 1.4, cy + Math.sin(ang) * ch * 1.4]);
+    }
+  }
+  ctx.beginPath();
+  points.forEach(([x, y], i) => {
+    const next = points[(i + 1) % points.length];
+    const midX = (x + next[0]) / 2;
+    const midY = (y + next[1]) / 2;
+    if (i === 0) ctx.moveTo(midX, midY);
+    ctx.quadraticCurveTo(x, y, midX, midY);
+  });
+  ctx.closePath();
+  ctx.fillStyle = "rgba(120, 64, 28, 0.55)";
+  ctx.strokeStyle = "#5c3a1e";
+  ctx.lineWidth = 3;
+  ctx.fill();
+  ctx.stroke();
+}
+
+function drawColony(state) {
+  const w = canvas.width;
+  const h = canvas.height;
+  const cw = w / state.width;
+  const ch = h / state.height;
   const level = Number(zoom.value);
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = "#fffdf8";
+  ctx.fillRect(0, 0, w, h);
+
+  if (level < 2) drawHaze(state, cw, ch);
+
   if (level === 0) {
+    const body = Math.min(cw, ch) * 0.52;
     for (let i = 0; i < state.count; i += 1) {
-      const px = (state.x[i] + 0.5) * cw;
-      const py = (state.y[i] + 0.5) * ch;
-      ctx.fillStyle = state.carry[i] ? "#c4492a" : "#241833";
-      ctx.beginPath();
-      ctx.ellipse(px, py, cw * 0.28, ch * 0.18, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.arc(px + cw * 0.16, py - ch * 0.08, cw * 0.08, 0, Math.PI * 2);
-      ctx.fill();
+      drawAnt(
+        (state.x[i] / state.scale) * cw,
+        (state.y[i] / state.scale) * ch,
+        state.head[i],
+        state.carry[i] === 1,
+        body
+      );
     }
   } else if (level === 1) {
     for (let id = 0; id < state.clusters; id += 1) {
       const n = state.group[id];
       if (n <= 0) continue;
-      const px = ((state.sumX[id] / n) + 0.5) * cw;
-      const py = ((state.sumY[id] / n) + 0.5) * ch;
-      let radius = cw * (0.55 + Math.sqrt(n) * 0.2);
-      radius = Math.max(cw * 0.45, Math.min(radius, px - 4, py - 4, w - px - 4, h - py - 4));
-      ctx.fillStyle = "rgba(36, 24, 51, 0.28)";
+      const px = (state.sumX[id] / n / state.scale) * cw;
+      const py = (state.sumY[id] / n / state.scale) * ch;
+      let radius = cw * (0.2 + n * 0.16);
+      radius = Math.max(4, Math.min(radius, px - 2, py - 2, w - px - 2, h - py - 2));
+      ctx.fillStyle = "rgba(36, 24, 51, 0.22)";
       ctx.beginPath();
       ctx.arc(px, py, radius, 0, Math.PI * 2);
       ctx.fill();
     }
   } else {
-    const px = (state.symX + 0.5) * cw;
-    const py = (state.symY + 0.5) * ch;
-    const rx = Math.max(cw * 1.4, Math.sqrt(state.symRX) * cw * 0.85);
-    const ry = Math.max(ch * 1.1, Math.sqrt(state.symRY) * ch * 0.85);
-    ctx.fillStyle = "rgba(36, 24, 51, 0.88)";
-    ctx.beginPath();
-    ctx.ellipse(px, py, rx, ry, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#fff6ea";
-    ctx.beginPath();
-    ctx.arc(px - rx * 0.25, py - ry * 0.1, Math.min(rx, ry) * 0.16, 0, Math.PI * 2);
-    ctx.arc(px + rx * 0.25, py - ry * 0.1, Math.min(rx, ry) * 0.16, 0, Math.PI * 2);
-    ctx.fill();
+    drawOutline(state, cw, ch);
+  }
+
+  if (level < 2) {
+    const nestS = Math.min(cw, ch);
+    drawNest((state.nestX + 0.5) * cw, (state.nestY + 0.5) * ch, nestS);
+    for (let i = 0; i < state.meals.length; i += 1) {
+      if (state.meals[i] <= 0) continue;
+      const x = i % state.width;
+      const y = Math.floor(i / state.width);
+      drawCrumbs((x + 0.5) * cw, (y + 0.5) * ch, Math.min(cw, ch) * 1.15);
+    }
   }
 }
 
@@ -181,7 +301,7 @@ function draw() {
 }
 
 function colonyGap() {
-  return motionQuery.matches ? 900 : 150;
+  return motionQuery.matches ? 900 : 50;
 }
 
 function startAnts() {
@@ -286,7 +406,7 @@ motionQuery.addEventListener("change", () => {
   if (wasm) startAnts();
 });
 
-const response = await fetch("ant.wasm?v=1");
+const response = await fetch("ant.wasm?v=2");
 const {instance} = await WebAssembly.instantiate(await response.arrayBuffer());
 wasm = instance;
 wasm.exports.ant_reset();

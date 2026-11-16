@@ -5,12 +5,11 @@ package body Ant is
    Nest_X : constant Integer := Width / 2;
    Nest_Y : constant Integer := Height / 2;
 
-   DX : constant array (0 .. 3) of Integer := (0, 1, 0, -1);
-   DY : constant array (0 .. 3) of Integer := (-1, 0, 1, 0);
-
    Motif : constant array (0 .. Motif_N - 1) of Integer := (0, 2, 4, 5);
 
-   AX, AY   : array (0 .. Ant_Count - 1) of Integer := (others => Nest_X);
+   AX, AY   : array (0 .. Ant_Count - 1) of Integer := (others => Nest_X * Scale);
+   AH       : array (0 .. Ant_Count - 1) of Integer := (others => 0);
+   Outline  : array (0 .. Outline_N - 1) of Integer := (others => 2);
    Carry    : array (0 .. Ant_Count - 1) of Integer := (others => 0);
    Trail    : array (0 .. Cells - 1) of Integer := (others => 0);
    Food     : array (0 .. Cells - 1) of Integer := (others => 0);
@@ -18,7 +17,7 @@ package body Ant is
    Sum_X    : array (0 .. Cluster_N - 1) of Integer := (others => 0);
    Sum_Y    : array (0 .. Cluster_N - 1) of Integer := (others => 0);
    Voices   : array (0 .. Voice_N * 3 - 1) of Integer := (others => 0);
-   Meta     : array (0 .. 17) of Integer := (others => 0);
+   Meta     : array (0 .. 18) of Integer := (others => 0);
    Rand     : Word := 16#A5F0_1234#;
    Fugue    : Integer := -1;
    Stepped  : Integer := 0;
@@ -33,19 +32,29 @@ package body Ant is
    end Next_Below;
 
    function Ant_X (Index : Natural) return Natural is
+      Cell_X : Integer;
    begin
       if Index >= Ant_Count or else AX (Index) < 0 then
          return 0;
       end if;
-      return Natural (AX (Index));
+      Cell_X := AX (Index) / Scale;
+      if Cell_X >= Width then
+         Cell_X := Width - 1;
+      end if;
+      return Natural (Cell_X);
    end Ant_X;
 
    function Ant_Y (Index : Natural) return Natural is
+      Cell_Y : Integer;
    begin
       if Index >= Ant_Count or else AY (Index) < 0 then
          return 0;
       end if;
-      return Natural (AY (Index));
+      Cell_Y := AY (Index) / Scale;
+      if Cell_Y >= Height then
+         Cell_Y := Height - 1;
+      end if;
+      return Natural (Cell_Y);
    end Ant_Y;
 
    function Carrying (Index : Natural) return Boolean is
@@ -54,8 +63,8 @@ package body Ant is
    function In_Bounds return Boolean is
    begin
       for I in 0 .. Ant_Count - 1 loop
-         if AX (I) < 0 or else AX (I) >= Width
-           or else AY (I) < 0 or else AY (I) >= Height
+         if AX (I) < 0 or else AX (I) >= Width * Scale
+           or else AY (I) < 0 or else AY (I) >= Height * Scale
          then
             return False;
          end if;
@@ -208,10 +217,90 @@ package body Ant is
          end loop;
       end if;
 
+      Outline := (others => 0);
+      if Mass > 0 then
+         for I in Trail'Range loop
+            if Trail (I) > 1 then
+               declare
+                  X    : constant Integer := Integer (I mod Width);
+                  Y    : constant Integer := Integer (I / Width);
+                  DX   : constant Integer := X - Mean_X;
+                  DY   : constant Integer := Y - Mean_Y;
+                  Best : Integer := -1_000_000;
+                  Slot : Natural := 0;
+                  Dist : Integer;
+                  Cos16 : constant array (0 .. 15) of Integer :=
+                    (64, 59, 45, 24, 0, -24, -45, -59,
+                     -64, -59, -45, -24, 0, 24, 45, 59);
+                  Sin16 : constant array (0 .. 15) of Integer :=
+                    (0, 24, 45, 59, 64, 59, 45, 24,
+                     0, -24, -45, -59, -64, -59, -45, -24);
+               begin
+                  for H in Cos16'Range loop
+                     declare
+                        Dot : constant Integer := DX * Cos16 (H) + DY * Sin16 (H);
+                     begin
+                        if Dot > Best then
+                           Best := Dot;
+                           Slot := H;
+                        end if;
+                     end;
+                  end loop;
+                  Dist := abs (DX);
+                  if abs (DY) > Dist then
+                     Dist := abs (DY);
+                  end if;
+                  if Dist > Outline (Slot) then
+                     Outline (Slot) := Dist;
+                  end if;
+               end;
+            end if;
+         end loop;
+         declare
+            Filled : array (0 .. Outline_N - 1) of Integer := (others => 0);
+         begin
+            for H in Outline'Range loop
+               if Outline (H) > 0 then
+                  Filled (H) := Outline (H);
+               else
+                  declare
+                     Left_D  : Natural := 1;
+                     Right_D : Natural := 1;
+                     Left_V  : Integer := 0;
+                     Right_V : Integer := 0;
+                  begin
+                     while Left_D < Outline_N
+                       and then Outline ((H + Outline_N - Left_D) mod Outline_N) = 0
+                     loop
+                        Left_D := Left_D + 1;
+                     end loop;
+                     while Right_D < Outline_N
+                       and then Outline ((H + Right_D) mod Outline_N) = 0
+                     loop
+                        Right_D := Right_D + 1;
+                     end loop;
+                     if Left_D < Outline_N and then Right_D < Outline_N then
+                        Left_V := Outline ((H + Outline_N - Left_D) mod Outline_N);
+                        Right_V := Outline ((H + Right_D) mod Outline_N);
+                        Filled (H) :=
+                          (Left_V * Integer (Right_D) + Right_V * Integer (Left_D))
+                          / Integer (Left_D + Right_D);
+                     end if;
+                  end;
+               end if;
+            end loop;
+            for H in Outline'Range loop
+               Outline (H) := Filled (H);
+            end loop;
+         end;
+      else
+         Outline := (others => 2);
+      end if;
+
       Meta :=
         (Ant_Count, Width, Height, Trail_Max, Nest_X, Nest_Y, Food_Sum, Stepped,
          Cluster_N, Voice_N, Motif_N, Loop_N, Fugue, Step_Ms, Mean_X, Mean_Y,
-         Var_X, Var_Y);
+         Var_X, Var_Y, Scale);
    end Publish;
 
    procedure Reset is
@@ -223,19 +312,12 @@ package body Ant is
       Stepped := 0;
       Fugue := -1;
       for I in 0 .. Ant_Count - 1 loop
-         AX (I) := Nest_X + Integer (Next_Below (7)) - 3;
-         AY (I) := Nest_Y + Integer (Next_Below (5)) - 2;
-         if AX (I) < 0 then
-            AX (I) := 0;
-         elsif AX (I) >= Width then
-            AX (I) := Width - 1;
-         end if;
-         if AY (I) < 0 then
-            AY (I) := 0;
-         elsif AY (I) >= Height then
-            AY (I) := Height - 1;
-         end if;
+         AX (I) := Integer (Next_Below ((Width - 2) * Scale)) + Scale;
+         AY (I) := Integer (Next_Below ((Height - 2) * Scale)) + Scale;
+         AH (I) := Integer (Next_Below (8));
       end loop;
+      Food (Cell (Seed_X1, Seed_Y1)) := 40;
+      Food (Cell (Seed_X2, Seed_Y2)) := 40;
       Publish;
    end Reset;
 
@@ -283,103 +365,190 @@ package body Ant is
       Publish;
    end Drop_Food;
 
+   function Heading_Of (DX : Integer; DY : Integer) return Natural is
+      Best : Integer := -1_000_000;
+      Pick : Natural := 0;
+      VX   : Integer;
+      VY   : Integer;
+      Dot  : Integer;
+   begin
+      for H in 0 .. 7 loop
+         case H is
+            when 0 => VX := 4; VY := 0;
+            when 1 => VX := 3; VY := 3;
+            when 2 => VX := 0; VY := 4;
+            when 3 => VX := -3; VY := 3;
+            when 4 => VX := -4; VY := 0;
+            when 5 => VX := -3; VY := -3;
+            when 6 => VX := 0; VY := -4;
+            when 7 => VX := 3; VY := -3;
+         end case;
+         Dot := DX * VX + DY * VY;
+         if Dot > Best then
+            Best := Dot;
+            Pick := H;
+         end if;
+      end loop;
+      return Pick;
+   end Heading_Of;
+
+   function Turn_Toward (From : Natural; To : Natural) return Natural is
+      Diff : Integer := Integer (To) - Integer (From);
+   begin
+      if Diff > 4 then
+         Diff := Diff - 8;
+      elsif Diff < -4 then
+         Diff := Diff + 8;
+      end if;
+      if Diff > 0 then
+         return (From + 1) mod 8;
+      elsif Diff < 0 then
+         return (From + 7) mod 8;
+      end if;
+      return From;
+   end Turn_Toward;
+
+   procedure Step_Delta (Heading : Natural; MX : out Integer; MY : out Integer) is
+   begin
+      case Heading is
+         when 0 => MX := 28; MY := 0;
+         when 1 => MX := 20; MY := 20;
+         when 2 => MX := 0; MY := 28;
+         when 3 => MX := -20; MY := 20;
+         when 4 => MX := -28; MY := 0;
+         when 5 => MX := -20; MY := -20;
+         when 6 => MX := 0; MY := -28;
+         when others => MX := 20; MY := -20;
+      end case;
+   end Step_Delta;
+
+   function Nearest_Food (X : Integer; Y : Integer) return Natural is
+      Best : Integer := Integer'Last;
+      Pick : Natural := 0;
+      Seen : Boolean := False;
+   begin
+      for F in Food'Range loop
+         if Food (F) > 0 then
+            declare
+               FX   : constant Integer := Integer (F mod Width) * Scale + Scale / 2;
+               FY   : constant Integer := Integer (F / Width) * Scale + Scale / 2;
+               Dist : constant Integer := abs (X - FX) + abs (Y - FY);
+            begin
+               if not Seen or else Dist < Best then
+                  Best := Dist;
+                  Pick := F;
+                  Seen := True;
+               end if;
+            end;
+         end if;
+      end loop;
+      return Pick;
+   end Nearest_Food;
+
    procedure Step is
+      Speed_X : Integer;
+      Speed_Y : Integer;
    begin
       for I in 0 .. Ant_Count - 1 loop
          declare
-            Best : Integer := -1;
-            NX   : Integer := AX (I);
-            NY   : Integer := AY (I);
+            Cell_X : Integer := AX (I) / Scale;
+            Cell_Y : Integer := AY (I) / Scale;
+            Want   : Natural;
+            Here   : Natural;
          begin
-            for D in 0 .. 3 loop
-               declare
-                  TX    : constant Integer := AX (I) + DX (D);
-                  TY    : constant Integer := AY (I) + DY (D);
-                  Score : Integer;
-               begin
-                  if TX in 0 .. Width - 1 and then TY in 0 .. Height - 1 then
-                     Score := Trail (Cell (TX, TY)) * 4 + Integer (Next_Below (4));
-                     if Carry (I) = 1 then
-                        Score := Score + (Width - abs (TX - Nest_X)) * 2
-                          + (Height - abs (TY - Nest_Y)) * 2;
-                     else
-                        Score := Score + Food (Cell (TX, TY)) * 6;
-                        declare
-                           Pull : Integer := 0;
-                        begin
-                           for F in Food'Range loop
-                              if Food (F) > 0 then
-                                 declare
-                                    FX : constant Integer := Integer (F mod Width);
-                                    FY : constant Integer := Integer (F / Width);
-                                    Here : constant Integer :=
-                                      Width + Height - abs (TX - FX) - abs (TY - FY);
-                                 begin
-                                    if Here > Pull then
-                                       Pull := Here;
-                                    end if;
-                                 end;
-                              end if;
-                           end loop;
-                           Score := Score + Pull;
-                        end;
-                     end if;
-                     if Score > Best then
-                        Best := Score;
-                        NX := TX;
-                        NY := TY;
-                     end if;
-                  end if;
-               end;
-            end loop;
-
+            if Cell_X < 0 then
+               Cell_X := 0;
+            elsif Cell_X >= Width then
+               Cell_X := Width - 1;
+            end if;
+            if Cell_Y < 0 then
+               Cell_Y := 0;
+            elsif Cell_Y >= Height then
+               Cell_Y := Height - 1;
+            end if;
+            Here := Cell (Cell_X, Cell_Y);
             if Carry (I) = 1 then
+               Want := Heading_Of
+                 (Nest_X * Scale + Scale / 2 - AX (I),
+                  Nest_Y * Scale + Scale / 2 - AY (I));
+               Trail (Here) := Trail (Here) + 10;
+               if Trail (Here) > Trail_Max then
+                  Trail (Here) := Trail_Max;
+               end if;
+            elsif I < 36 then
                declare
-                  Id : constant Natural := Cell (AX (I), AY (I));
+                  Food_Cell : constant Natural := Nearest_Food (AX (I), AY (I));
                begin
-                  Trail (Id) := Trail (Id) + 8;
-                  if Trail (Id) > Trail_Max then
-                     Trail (Id) := Trail_Max;
+                  if Food (Food_Cell) > 0 then
+                     Want := Heading_Of
+                       (Integer (Food_Cell mod Width) * Scale + Scale / 2 - AX (I),
+                        Integer (Food_Cell / Width) * Scale + Scale / 2 - AY (I));
+                  else
+                     Want := Natural (AH (I));
                   end if;
                end;
+            else
+               Want := Natural (AH (I));
             end if;
-
-            if Best >= 0 then
-               AX (I) := NX;
-               AY (I) := NY;
-            end if;
-
-            declare
-               Id : constant Natural := Cell (AX (I), AY (I));
-            begin
-               if Carry (I) = 1 and then AX (I) = Nest_X and then AY (I) = Nest_Y then
-                  Carry (I) := 0;
-               elsif Carry (I) = 0 and then Food (Id) > 0
-                 and then not (AX (I) = Nest_X and then AY (I) = Nest_Y)
-               then
-                  Food (Id) := Food (Id) - 1;
-                  Carry (I) := 1;
+            if Next_Below (6) = 0 then
+               if Next_Below (2) = 0 then
+                  Want := (Want + 1) mod 8;
+               else
+                  Want := (Want + 7) mod 8;
                end if;
-            end;
+            end if;
+            AH (I) := Integer (Turn_Toward (Natural (AH (I)), Want));
+            Step_Delta (Natural (AH (I)), Speed_X, Speed_Y);
+            AX (I) := AX (I) + Speed_X;
+            AY (I) := AY (I) + Speed_Y;
+            if AX (I) < Scale / 4 then
+               AX (I) := Scale / 4;
+               AH (I) := Integer ((Natural (AH (I)) + 4) mod 8);
+            elsif AX (I) >= Width * Scale - Scale / 4 then
+               AX (I) := Width * Scale - Scale / 4 - 1;
+               AH (I) := Integer ((Natural (AH (I)) + 4) mod 8);
+            end if;
+            if AY (I) < Scale / 4 then
+               AY (I) := Scale / 4;
+               AH (I) := Integer ((Natural (AH (I)) + 4) mod 8);
+            elsif AY (I) >= Height * Scale - Scale / 4 then
+               AY (I) := Height * Scale - Scale / 4 - 1;
+               AH (I) := Integer ((Natural (AH (I)) + 4) mod 8);
+            end if;
+            Cell_X := AX (I) / Scale;
+            Cell_Y := AY (I) / Scale;
+            if Cell_X >= Width then
+               Cell_X := Width - 1;
+            end if;
+            if Cell_Y >= Height then
+               Cell_Y := Height - 1;
+            end if;
+            Here := Cell (Cell_X, Cell_Y);
+            if Carry (I) = 1 and then Cell_X = Nest_X and then Cell_Y = Nest_Y then
+               Carry (I) := 0;
+            elsif Carry (I) = 0 and then Food (Here) > 0
+              and then not (Cell_X = Nest_X and then Cell_Y = Nest_Y)
+            then
+               Food (Here) := Food (Here) - 1;
+               Carry (I) := 1;
+            end if;
          end;
       end loop;
 
-      for I in Trail'Range loop
-         if Trail (I) > 0 then
-            Trail (I) := Trail (I) - 1;
-         end if;
-      end loop;
+      if Stepped mod 12 = 0 then
+         for I in Trail'Range loop
+            if Trail (I) > 0 then
+               Trail (I) := Trail (I) - 1;
+            end if;
+         end loop;
+      end if;
       Stepped := Stepped + 1;
       Publish;
    end Step;
 
    procedure Steps (Count : Natural) is
-      N : Natural := Count;
    begin
-      if N > 3 then
-         N := 3;
-      end if;
-      for Turn in 1 .. N loop
+      for Turn in 1 .. Count loop
          Step;
       end loop;
    end Steps;
@@ -405,6 +574,8 @@ package body Ant is
    function Sum_Y_Address return System.Address is (Sum_Y'Address);
    function Motif_Address return System.Address is (Motif'Address);
    function Voice_Address return System.Address is (Voices'Address);
+   function Head_Address return System.Address is (AH'Address);
+   function Outline_Address return System.Address is (Outline'Address);
 
    procedure Reset_Exported is
    begin
