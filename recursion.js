@@ -37,8 +37,9 @@ const frames = document.getElementById("frames");
 const stack = document.getElementById("stack");
 const tree = document.getElementById("tree");
 const rabbits = document.getElementById("rabbits");
-const depthInput = document.getElementById("depth");
-const depthN = document.getElementById("depth-n");
+const treeN = document.getElementById("tree-n");
+const treeGrow = document.getElementById("tree-grow");
+const treeBack = document.getElementById("tree-back");
 const levelN = document.getElementById("level-n");
 const rabbitN = document.getElementById("rabbit-n");
 const deeper = document.getElementById("deeper");
@@ -47,21 +48,36 @@ const next = document.getElementById("next");
 
 let wasm = null;
 
+function placesText(places, which, len) {
+  let out = "";
+  const start = which * 256;
+  for (let i = len - 1; i >= 0; i -= 1) out += String(places[start + i]);
+  return out || "0";
+}
+
 function read() {
   const exp = wasm.exports;
   const memory = exp.memory.buffer;
   const meta = new Int32Array(memory, exp.recursion_meta() >>> 0, 12);
   const segments = meta[3];
   const dots = meta[8];
+  const valueLen = meta[5];
+  const olderLen = meta[6];
+  const newerLen = meta[7];
+  const places = new Int32Array(memory, exp.recursion_digits() >>> 0, 256 * 3);
   return {
     depth: meta[0],
-    maxDepth: meta[1],
     tree: meta[2],
+    visible: meta[10],
     segments,
     terms: meta[4],
-    value: meta[5],
-    older: meta[6],
-    newer: meta[7],
+    valueLen,
+    olderLen,
+    newerLen,
+    unit: meta[11],
+    valueText: placesText(places, 0, valueLen),
+    olderText: placesText(places, 1, olderLen),
+    newerText: placesText(places, 2, newerLen),
     dots,
     error: meta[9],
     seg: new Int32Array(memory, exp.recursion_segments() >>> 0, Math.max(segments, 1) * 5),
@@ -129,7 +145,7 @@ function remember(state) {
   back.setAttribute("aria-disabled", state.depth <= 1 ? "true" : "false");
   window.GEB.state = {
     wasm: "ok",
-    string: `${state.depth} / ${state.tree} / ${state.value}`,
+    string: `${state.depth} / ${state.tree} / ${state.valueText}`,
     history: `${state.segments} branches`,
     error: t("err" + state.error)
   };
@@ -141,12 +157,15 @@ function drawFrames(state) {
   if (!sliding && shownDepth !== state.depth) paintScene(state.depth);
 }
 
+let treeSliding = false;
+
 function drawTree(state) {
   const parts = [];
+  const visible = state.visible;
   for (let i = 0; i < state.segments; i += 1) {
     const base = i * 5;
     const level = state.seg[base + 4];
-    const mix = state.tree === 0 ? 0 : level / state.tree;
+    const mix = visible === 0 ? 0 : level / visible;
     const channel = (from, to) => Math.round(from + (to - from) * mix);
     const width = Math.max(2.2, 36 * 0.66 ** level);
     const colour = `rgb(${channel(107, 47)} ${channel(62, 122)} ${channel(38, 64)})`;
@@ -154,9 +173,58 @@ function drawTree(state) {
       `<line x1="${state.seg[base]}" y1="${1000 - state.seg[base + 1]}" x2="${state.seg[base + 2]}" y2="${1000 - state.seg[base + 3]}" stroke="${colour}" stroke-width="${width.toFixed(1)}" stroke-linecap="round"/>`
     );
   }
-  tree.innerHTML = parts.join("");
-  depthInput.value = String(state.tree);
-  depthN.textContent = String(state.tree);
+  tree.innerHTML = `<g id="tree-cam">${parts.join("")}</g>`;
+  treeN.textContent = String(state.tree);
+  treeBack.classList.toggle("is-dim", state.tree <= 0);
+  treeBack.setAttribute("aria-disabled", state.tree <= 0 ? "true" : "false");
+}
+
+function subtreeBox(state) {
+  const leftCount = 2 ** state.visible - 1;
+  let minX = Infinity;
+  let maxX = -Infinity;
+  let minY = Infinity;
+  let maxY = -Infinity;
+  const last = Math.min(leftCount, state.segments - 1);
+  for (let i = 1; i <= last; i += 1) {
+    const base = i * 5;
+    const xs = [state.seg[base], state.seg[base + 2]];
+    const ys = [1000 - state.seg[base + 1], 1000 - state.seg[base + 3]];
+    minX = Math.min(minX, xs[0], xs[1]);
+    maxX = Math.max(maxX, xs[0], xs[1]);
+    minY = Math.min(minY, ys[0], ys[1]);
+    maxY = Math.max(maxY, ys[0], ys[1]);
+  }
+  return {minX, maxX, minY, maxY};
+}
+
+function frameZoom(box) {
+  const bw = Math.max(1, box.maxX - box.minX);
+  const bh = Math.max(1, box.maxY - box.minY);
+  const scale = 840 / Math.max(bw, bh);
+  const cx = (box.minX + box.maxX) / 2;
+  const cy = (box.minY + box.maxY) / 2;
+  return {tx: 500 - cx * scale, ty: 500 - cy * scale, scale};
+}
+
+function animateTree(from, to, done) {
+  const cam = tree.querySelector("#tree-cam");
+  if (!cam || motionOff()) {
+    done();
+    return;
+  }
+  const start = performance.now();
+  const step = (now) => {
+    const t = Math.min(1, (now - start) / 560);
+    const eased = t < 0.5 ? 2 * t * t : 1 - ((-2 * t + 2) ** 2) / 2;
+    const tx = from.tx + (to.tx - from.tx) * eased;
+    const ty = from.ty + (to.ty - from.ty) * eased;
+    const scale = from.scale + (to.scale - from.scale) * eased;
+    cam.setAttribute("transform", `translate(${tx} ${ty}) scale(${scale})`);
+    if (t < 1) requestAnimationFrame(step);
+    else done();
+  };
+  requestAnimationFrame(step);
 }
 
 function dotAt(state, index) {
@@ -192,18 +260,22 @@ function drawRabbits(state) {
     piles[dot.pile].push(dot);
     marks.push(`<circle cx="${dot.x}" cy="${dot.y}" r="${dot.r}" fill="${dot.color === 0 ? "#e23b4a" : "#2c6bed"}"/>`);
   }
-  const label = (dots, text, size) => {
+  const fit = (labelText, width, max) => Math.max(
+    12,
+    Math.min(max, Math.floor((width / Math.max(labelText.length, 1)) * 1.55))
+  );
+  const label = (dots, labelText, size) => {
     if (!dots.length) return;
     const box = pileBounds(dots);
-    marks.push(`<text x="${box.cx}" y="${box.maxY + size}" text-anchor="middle" font-size="${size}" font-weight="700" fill="#241833">${text}</text>`);
+    marks.push(`<text x="${box.cx}" y="${box.maxY + size + 10}" text-anchor="middle" font-size="${size}" font-weight="700" fill="#241833">${labelText}</text>`);
   };
   if (state.terms >= 3) {
-    label(piles[0], String(state.older), 34);
-    label(piles[1], String(state.newer), 34);
-    label(piles[2], String(state.value), 42);
     const left = pileBounds(piles[0]);
     const mid = pileBounds(piles[1]);
     const right = pileBounds(piles[2]);
+    label(piles[0], state.olderText, fit(state.olderText, left.maxX - left.minX, 34));
+    label(piles[1], state.newerText, fit(state.newerText, mid.maxX - mid.minX, 34));
+    label(piles[2], state.valueText, fit(state.valueText, Math.max(right.maxX - right.minX, 180), 42));
     const rowY = (right.minY + right.maxY) / 2;
     const plusX = (left.maxX + mid.minX) / 2;
     marks.push(`<text x="${plusX}" y="${rowY}" text-anchor="middle" dominant-baseline="middle" font-size="48" font-weight="700" fill="#241833">+</text>`);
@@ -212,12 +284,17 @@ function drawRabbits(state) {
     marks.push(`<line x1="${x1}" y1="${rowY}" x2="${x2}" y2="${rowY}" stroke="#241833" stroke-width="7" stroke-linecap="round"/>`);
     marks.push(`<polygon points="${x2},${rowY} ${x2 - 18},${rowY - 12} ${x2 - 18},${rowY + 12}" fill="#241833"/>`);
   } else {
-    label(piles[2], String(state.value), 56);
+    label(piles[2], state.valueText, 56);
+  }
+  if (state.unit > 0) {
+    const sup = "⁰¹²³⁴⁵⁶⁷⁸⁹";
+    const legend = state.unit <= 3
+      ? `● = 1${"0".repeat(state.unit)}`
+      : `● = 10${String(state.unit).replace(/\d/g, (digit) => sup[digit])}`;
+    marks.push(`<text x="500" y="78" text-anchor="middle" font-size="32" font-weight="700" fill="#241833">${legend}</text>`);
   }
   rabbits.innerHTML = marks.join("");
-  rabbitN.textContent = String(state.value);
-  next.classList.toggle("is-dim", state.terms >= 11);
-  next.setAttribute("aria-disabled", state.terms >= 11 ? "true" : "false");
+  rabbitN.textContent = state.valueText;
 }
 
 function show(state) {
@@ -313,17 +390,83 @@ frames.addEventListener("keydown", (event) => {
 
 back.addEventListener("click", stepOut);
 
-depthInput.addEventListener("input", () => {
-  wasm.exports.recursion_tree(Number(depthInput.value));
-  draw();
-});
+function growTree() {
+  if (treeSliding) return;
+  const before = read();
+  wasm.exports.recursion_tree(before.tree + 1);
+  const state = read();
+  if (state.tree <= before.tree) {
+    play("no");
+    drawTree(state);
+    return;
+  }
+  playRise(state.tree);
+  if (before.tree >= 10 && before.visible >= 2 && !motionOff()) {
+    treeSliding = true;
+    const zoom = frameZoom(subtreeBox(before));
+    animateTree({tx: 0, ty: 0, scale: 1}, zoom, () => {
+      drawTree(state);
+      treeSliding = false;
+    });
+  } else {
+    drawTree(state);
+  }
+}
 
-next.addEventListener("click", () => {
+function backTree() {
+  if (treeSliding) return;
+  const before = read();
+  if (before.tree <= 0) {
+    play("no");
+    return;
+  }
+  wasm.exports.recursion_tree(before.tree - 1);
+  const state = read();
+  playFall(before.tree);
+  drawTree(state);
+  if (before.tree > 10 && state.visible >= 2 && !motionOff()) {
+    const zoom = frameZoom(subtreeBox(state));
+    const cam = tree.querySelector("#tree-cam");
+    cam.setAttribute("transform", `translate(${zoom.tx} ${zoom.ty}) scale(${zoom.scale})`);
+    treeSliding = true;
+    animateTree(zoom, {tx: 0, ty: 0, scale: 1}, () => {
+      cam.removeAttribute("transform");
+      treeSliding = false;
+    });
+  }
+}
+
+function stepRabbit() {
   wasm.exports.recursion_next();
   const state = read();
   if (state.error === 0) playRise(state.terms);
   else play("no");
-  show(state);
+  drawRabbits(state);
+  window.GEB.state.string = `${state.depth} / ${state.tree} / ${state.valueText}`;
+  window.GEB.refreshDebug?.();
+}
+
+treeGrow.addEventListener("click", growTree);
+tree.addEventListener("click", growTree);
+tree.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter" && event.key !== " ") return;
+  event.preventDefault();
+  growTree();
+});
+treeBack.addEventListener("click", backTree);
+document.getElementById("tree-reset").addEventListener("click", () => {
+  if (treeSliding) return;
+  wasm.exports.recursion_tree(0);
+  play("reset");
+  drawTree(read());
+});
+
+next.addEventListener("click", stepRabbit);
+rabbits.addEventListener("click", stepRabbit);
+rabbits.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter" && event.key !== " ") return;
+  event.preventDefault();
+  stepRabbit();
 });
 
 window.addEventListener("resize", () => {
@@ -340,7 +483,7 @@ document.getElementById("rabbit-reset").addEventListener("click", () => {
   draw();
 });
 
-const response = await fetch("recursion.wasm?v=3");
+const response = await fetch("recursion.wasm?v=4");
 const {instance} = await WebAssembly.instantiate(await response.arrayBuffer());
 wasm = instance;
 wasm.exports.recursion_reset();
