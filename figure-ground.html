@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Black and white animals share one picture. The gaps are animals too. Tap to swap, or fade between them.">
+<meta name="description" content="Triangles grow into birds. Drag the slider, or tap a bird.">
 <title>Figure and ground</title>
 <link rel="icon" href="favicon.svg">
-<link rel="stylesheet" href="styles.css?v=4">
-<script type="module" src="figure.js?v=10"></script>
+<link rel="stylesheet" href="styles.css?v=5">
+<script type="module" src="figure.js?v=11"></script>
 </head>
 <body data-page-title="chapter3">
 <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -28,15 +28,15 @@
 </header>
 <main id="main">
   <h1 data-i18n="chapter3">Figure and ground</h1>
-  <p data-i18n="figLead">The gaps are animals too.</p>
+  <p data-i18n="figLead">Triangles grow into birds.</p>
   <p id="resting" class="resting" hidden data-i18n="resting">The blocks are resting.</p>
   <div class="picture-frame">
     <svg id="picture" role="img" aria-labelledby="who"></svg>
   </div>
-  <p class="still"><span id="who">Birds</span> · <span id="find" data-i18n="figFind">Tap a hidden one</span></p>
+  <p class="still"><span id="who">Growing</span> · <span id="find" data-i18n="figFind">Tap a bird</span></p>
   <label class="fade">
-    <span data-i18n="figFade">Fade</span>
-    <input id="fade" type="range" min="0" max="100" value="0" data-i18n-aria="figFade" aria-label="Fade">
+    <span data-i18n="figBirds">Birds</span>
+    <input id="birds" type="range" min="0" max="100" value="0" data-i18n-aria="figBirds" aria-label="Birds">
   </label>
   <div class="actions">
     <button type="button" id="undo" class="text-button"><span data-i18n="undo">Undo</span></button>

@@ -52,7 +52,7 @@ Integers are 32-bit. Character arrays are bytes. `miu_reset`, `miu_apply(rule, p
 
 `steps.wasm` exports `steps_reset`, `steps_step`, `steps_undo`, `steps_max`, `steps_scale`, and the addresses of `steps_meta` and `steps_widths`. After n steps the gap numerator is 1 and the denominator is 2ⁿ (1/1 at the start). The sum of the steps is one less than that denominator, so it stays below 1. Widths are integers in units of 1/2³⁰. The page stops at 30 steps because 2³⁰ still fits in a 32-bit signed integer.
 
-`figure.wasm` exports the blend, tap, undo, and one ink, layer and kind for each animal. Even animals are birds and odd animals are fish, so every region belongs to exactly one layer. The page draws those animals as smooth outlines. Blend 0 paints layer 0 at ink 255 and layer 1 at ink 0. Blend B paints layer 0 at `255 - (255*B)/100` and layer 1 at `(255*B)/100`. A swap replaces the blend with `100 - blend`, so a second swap restores every ink.
+`figure.wasm` exports the outlines, the eyes, the kind of each tile, and the morph, uniform stage, tap and undo. Dark tiles and cream tiles share every edge. The page draws the polygons Ada returns.
 
 ## Licences
 
