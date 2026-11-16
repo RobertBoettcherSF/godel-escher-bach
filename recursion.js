@@ -435,7 +435,7 @@ document.getElementById("rabbit-reset").addEventListener("click", () => {
   draw();
 });
 
-const response = await fetch("recursion.wasm?v=6");
+const response = await fetch("recursion.wasm?v=7");
 const {instance} = await WebAssembly.instantiate(await response.arrayBuffer());
 wasm = instance;
 wasm.exports.recursion_reset();

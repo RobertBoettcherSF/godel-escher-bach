@@ -10,7 +10,7 @@ v0.2 opens the endless steps. A runner closes half the remaining gap on every ta
 
 v0.4 turns figure and ground into a field of triangles that grow into birds. The curves, the morph and the taps live in Ada, compiled to `figure.wasm`. JavaScript only draws.
 
-v0.5 opens recursion. Frames nest, a tree branches, and rabbit dots follow the counts. That state is Ada, compiled to `recursion.wasm`. v0.5.1 lets each story open another story, with no stop in sight. v0.5.2 lets the tree and the rabbits keep growing the same way. v0.5.4 keeps the whole tree in the frame as it grows.
+v0.5 opens recursion. Frames nest, a tree branches, and rabbit dots follow the counts. That state is Ada, compiled to `recursion.wasm`. v0.5.1 lets each story open another story, with no stop in sight. v0.5.2 lets the tree and the rabbits keep growing the same way. v0.5.4 keeps the whole tree in the frame as it grows. v0.5.5 evens the pale tips along both edges.
 
 English (UK), German, Spanish and French. Four further chapters are drawn as closed tiles.
 

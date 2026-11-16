@@ -1,5 +1,9 @@
 # Release history
 
+## v0.5.5
+
+The pale leaf tips run along both edges of the canopy.
+
 ## v0.5.4
 
 The whole tree stays in the frame.

@@ -147,10 +147,11 @@ package body Recursion is
 
    --  About 0.75 px on a tree a few hundred pixels wide.
    Min_Screen : constant Float := 1.15;
-   Leaf_Cap   : constant := 1400;
 
    procedure Grow_Tree is
       Seen : Natural := 0;
+      Span_Min_X, Span_Max_X : Float := 0.0;
+      Columns : array (0 .. 47) of Natural := (others => 0);
 
       procedure Stamp (X, Y, Level : Integer) is
       begin
@@ -199,15 +200,26 @@ package body Recursion is
          X2 := X + Cosine * Length;
          Y2 := Y + Sine * Length;
          if Length * Scale < Min_Screen then
-            if Seen < Leaf_Cap and then Work_N < Max_Segments then
-               Work_X1 (Work_N) := X2;
-               Work_Y1 (Work_N) := Y2;
-               Work_X2 (Work_N) := X2;
-               Work_Y2 (Work_N) := Y2;
-               Work_Level (Work_N) := -1;
-               Work_N := Work_N + 1;
-               Seen := Seen + 1;
-            end if;
+            declare
+               Width : constant Float := Float'Max (Span_Max_X - Span_Min_X, 0.001);
+               Col : Integer := Integer ((X2 - Span_Min_X) / Width * 47.0);
+            begin
+               if Col < 0 then
+                  Col := 0;
+               elsif Col > 47 then
+                  Col := 47;
+               end if;
+               if Columns (Col) < 26 and then Work_N < Max_Segments then
+                  Work_X1 (Work_N) := X2;
+                  Work_Y1 (Work_N) := Y2;
+                  Work_X2 (Work_N) := X2;
+                  Work_Y2 (Work_N) := Y2;
+                  Work_Level (Work_N) := -1;
+                  Work_N := Work_N + 1;
+                  Columns (Col) := Columns (Col) + 1;
+                  Seen := Seen + 1;
+               end if;
+            end;
             return;
          end if;
          if Work_N >= Max_Segments then
@@ -246,6 +258,8 @@ package body Recursion is
       end if;
       Span := Float'Min (840.0 / (Max_X - Min_X), 840.0 / (Max_Y - Min_Y));
       Scale := Span;
+      Span_Min_X := Min_X;
+      Span_Max_X := Max_X;
       Work_N := 0;
       Emit (0.0, 0.0, Pi / 2.0, 0.38, 0, 1.0, Scale);
       for I in 0 .. Work_N - 1 loop
