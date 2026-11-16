@@ -587,6 +587,7 @@ footer {
   border-radius: 28px;
 }
 .staff .note { cursor: pointer; }
+.staff .bar, .staff .halo { pointer-events: none; }
 .crab-stage {
   --crab-w: 108px;
   position: relative;

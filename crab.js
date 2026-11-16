@@ -1,6 +1,6 @@
 import "./shell.js?v=1";
-import {getLang} from "./i18n.js?v=1";
-import {play, playDuet} from "./sounds.js?v=1";
+import {getLang, t} from "./i18n.js?v=1";
+import {armAudio, isMuted, play, silenceTones, toneAt} from "./sounds.js?v=1";
 
 const STARTERS = {
   en: ["KAYAK", "RADAR", "TENET"],
@@ -17,6 +17,10 @@ const playButton = document.getElementById("play-canon");
 
 let wasm = null;
 let pair = 0;
+let playing = false;
+let playOrigin = 0;
+let heardBeat = -1;
+let playFrame = 0;
 
 const DEGREE = 12;
 const UPPER_BOTTOM = 116;
@@ -25,13 +29,17 @@ const LOWER_BOTTOM = 268;
 function read() {
   const exp = wasm.exports;
   const memory = exp.memory.buffer;
-  const meta = new Int32Array(memory, exp.crab_meta() >>> 0, 6);
+  const meta = new Int32Array(memory, exp.crab_meta() >>> 0, 10);
   return {
     tiles: meta[0],
     palindrome: meta[1] === 1,
     notes: meta[2],
     melodyCount: meta[4],
     melody: meta[5],
+    stepMs: meta[6],
+    beat: meta[7],
+    upper: meta[8],
+    lower: meta[9],
     letters: new Int32Array(memory, exp.crab_letters() >>> 0, 11),
     pitches: new Int32Array(memory, exp.crab_notes() >>> 0, 8),
     mirrors: new Int32Array(memory, exp.crab_mirrors() >>> 0, 8)
@@ -47,6 +55,7 @@ function showPair() {
   }
   wasm.exports.crab_select_melody(pair);
   draw();
+  retune();
 }
 
 function glyph(code) {
@@ -86,8 +95,14 @@ function noteHead(x, y, filled, index, mid) {
   </g>`;
 }
 
+function noteX(column) {
+  return 108 + column * 86;
+}
+
 function drawStaff(state) {
   const parts = [];
+  parts.push(`<rect id="bar-up" pointer-events="none" y="14" width="28" height="110" rx="14" fill="#241833" opacity="0"/>`);
+  parts.push(`<rect id="bar-down" pointer-events="none" y="166" width="28" height="112" rx="14" fill="#c4492a" opacity="0"/>`);
   for (const bottom of [UPPER_BOTTOM, LOWER_BOTTOM]) {
     for (let degree = 0; degree <= 8; degree += 2) {
       const y = bottom - degree * DEGREE;
@@ -97,17 +112,49 @@ function drawStaff(state) {
   parts.push(`<text x="24" y="${pitchY(4, UPPER_BOTTOM) + 8}" font-size="26" fill="#241833">→</text>`);
   parts.push(`<text x="24" y="${pitchY(4, LOWER_BOTTOM) + 8}" font-size="26" fill="#c4492a">←</text>`);
   for (let i = 0; i < state.notes; i += 1) {
-    const x = 108 + i * 86;
+    const x = noteX(i);
     parts.push(noteHead(x, pitchY(state.pitches[i], UPPER_BOTTOM), true, i, pitchY(4, UPPER_BOTTOM)));
     parts.push(noteHead(x, pitchY(state.mirrors[i], LOWER_BOTTOM), false, -1, pitchY(4, LOWER_BOTTOM)));
   }
+  parts.push(`<circle id="halo-up" pointer-events="none" r="16" fill="#e7a008" fill-opacity="0.18" stroke="#e7a008" stroke-width="4" opacity="0"/>`);
+  parts.push(`<circle id="halo-down" pointer-events="none" r="16" fill="#e07a3d" fill-opacity="0.16" stroke="#e07a3d" stroke-width="4" opacity="0"/>`);
   staff.innerHTML = parts.join("");
+  staff.dataset.beat = String(state.beat);
+}
+
+function placeMarker(id, x, y, show) {
+  const node = document.getElementById(id);
+  if (!node) return;
+  if (node.tagName === "rect") {
+    node.setAttribute("x", String(x - 14));
+  } else {
+    node.setAttribute("cx", String(x));
+    node.setAttribute("cy", String(y));
+  }
+  node.setAttribute("opacity", show ? (node.tagName === "rect" ? "0.16" : "1") : "0");
+}
+
+function paint(state) {
+  const up = state.upper;
+  const down = state.lower;
+  const show = up >= 0 && down >= 0;
+  placeMarker("bar-up", noteX(show ? up : 0), 0, show);
+  placeMarker("bar-down", noteX(show ? down : 0), 0, show);
+  if (show) {
+    placeMarker("halo-up", noteX(up), pitchY(state.pitches[up], UPPER_BOTTOM), true);
+    placeMarker("halo-down", noteX(down), pitchY(state.mirrors[down], LOWER_BOTTOM), true);
+  } else {
+    placeMarker("halo-up", 0, 0, false);
+    placeMarker("halo-down", 0, 0, false);
+  }
+  staff.dataset.beat = String(state.beat);
 }
 
 function draw() {
   const state = read();
   drawLetters(state);
   drawStaff(state);
+  paint(state, 0);
   window.GEB.state = {
     wasm: "ok",
     string: state.palindrome ? "yes" : "no",
@@ -125,28 +172,90 @@ row.addEventListener("click", (event) => {
   draw();
 });
 
+function soundBeat(state) {
+  if (state.upper < 0 || state.lower < 0) return;
+  toneAt(state.pitches[state.upper], 0);
+  toneAt(state.mirrors[state.lower], 1);
+}
+
+function retune() {
+  if (!playing) return;
+  silenceTones();
+  soundBeat(read());
+}
+
+function setPlayLabel(on) {
+  const span = playButton.querySelector("[data-i18n]");
+  const key = on ? "canonStop" : "play";
+  if (span) {
+    span.dataset.i18n = key;
+    span.textContent = t(key);
+  }
+  playButton.setAttribute("aria-pressed", String(on));
+}
+
+function stopCanon() {
+  playing = false;
+  heardBeat = -1;
+  if (playFrame) cancelAnimationFrame(playFrame);
+  playFrame = 0;
+  silenceTones();
+  if (wasm) {
+    wasm.exports.crab_set_beat(-1);
+    draw();
+  }
+  setPlayLabel(false);
+}
+
+function playLoop() {
+  if (!playing) return;
+  const stateNow = read();
+  const step = (stateNow.stepMs || 340) / 1000;
+  const elapsed = (performance.now() - playOrigin) / 1000;
+  const beat = Math.floor(elapsed / step);
+  if (beat !== heardBeat) {
+    heardBeat = beat;
+    wasm.exports.crab_set_beat(beat);
+    const state = read();
+    soundBeat(state);
+    paint(state);
+  }
+  playFrame = requestAnimationFrame(playLoop);
+}
+
+function startCanon() {
+  if (!armAudio()) {
+    play("no");
+    return;
+  }
+  playing = true;
+  playOrigin = performance.now();
+  heardBeat = -1;
+  setPlayLabel(true);
+  playLoop();
+}
+
+function toggleCanon() {
+  if (playing) stopCanon();
+  else startCanon();
+}
+
 staff.addEventListener("click", (event) => {
   const note = event.target.closest("[data-note]");
   if (!note || note.dataset.note === "-1") return;
   wasm.exports.crab_cycle_note(Number(note.dataset.note));
-  play("pick");
+  if (!playing) play("pick");
   draw();
+  retune();
 });
 
 another.addEventListener("click", () => {
   pair += 1;
   showPair();
-  play("open");
+  if (!playing) play("open");
 });
 
-function playCanon() {
-  const state = read();
-  const forward = [...state.pitches];
-  const backward = [...state.mirrors];
-  if (!playDuet(forward, backward)) play("no");
-}
-
-playButton.addEventListener("click", playCanon);
+playButton.addEventListener("click", toggleCanon);
 
 staff.addEventListener("keydown", (event) => {
   if (event.key !== "Enter" && event.key !== " ") return;
@@ -154,8 +263,17 @@ staff.addEventListener("keydown", (event) => {
   if (!note) return;
   event.preventDefault();
   wasm.exports.crab_cycle_note(Number(note.dataset.note));
-  play("pick");
+  if (!playing) play("pick");
   draw();
+  retune();
+});
+
+window.addEventListener("soundchange", () => {
+  if (isMuted()) stopCanon();
+});
+
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) stopCanon();
 });
 
 window.addEventListener("languagechange", () => {
@@ -163,7 +281,7 @@ window.addEventListener("languagechange", () => {
   if (wasm) showPair();
 });
 
-const response = await fetch("crab.wasm?v=2");
+const response = await fetch("crab.wasm?v=3");
 const {instance} = await WebAssembly.instantiate(await response.arrayBuffer());
 wasm = instance;
 wasm.exports.crab_reset();

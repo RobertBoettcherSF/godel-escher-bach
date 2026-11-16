@@ -1,5 +1,13 @@
 # Release history
 
+## v0.6.2
+
+Play keeps going, and the notes that are sounding light up.
+
+- Play switches to Stop and repeats the canon until Stop, until the sound is turned off, or until the page is hidden.
+- A soft bar and a glow walk the upper staff from left to right. The lower staff is that tune written backwards, so its marker walks the same step and lights the backward voice. The two meet on the middle step, then wrap. Reduced motion snaps to the current notes.
+- Tapping a note, or Another, changes the tune while it is still playing.
+
 ## v0.6.1
 
 The row matches the word, and the lower line is the tune backwards.
