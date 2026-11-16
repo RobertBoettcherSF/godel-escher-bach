@@ -150,10 +150,11 @@ package body Recursion is
          Min_X := Min_X - 0.4;
          Max_X := Max_X + 0.4;
       end if;
-      Span := Float'Max (Max_X - Min_X, Max_Y - Min_Y);
-      Scale := 800.0 / Span;
+      Span := Float'Min (840.0 / (Max_X - Min_X), 840.0 / (Max_Y - Min_Y));
+      Scale := Span;
       Offset_X := 500.0 - (Min_X + Max_X) * 0.5 * Scale;
-      Offset_Y := 500.0 - (Min_Y + Max_Y) * 0.5 * Scale;
+      --  The trunk base sits about 8% up from the bottom of the frame.
+      Offset_Y := 80.0 - Min_Y * Scale;
       Seg_N := Work_N;
       for I in 0 .. Work_N - 1 loop
          Segs (I * 5) := Integer (Work_X1 (I) * Scale + Offset_X);
@@ -200,32 +201,6 @@ package body Recursion is
       Dot_N := Dot_N + 1;
    end Add_Dot;
 
-   procedure Best_Cell
-     (Count : Natural;
-      Max_W, Max_H, Limit : Float;
-      Cols, Rows : out Natural;
-      Cell : out Float)
-   is
-      Try_Rows : Natural;
-      Try_Cell : Float;
-   begin
-      Cols := 1;
-      Rows := Count;
-      Cell := Float'Min (Max_W, Max_H / Float (Count));
-      for Try_Cols in 1 .. Count loop
-         Try_Rows := (Count + Try_Cols - 1) / Try_Cols;
-         Try_Cell := Float'Min (Max_W / Float (Try_Cols), Max_H / Float (Try_Rows));
-         if Try_Cell > Cell then
-            Cell := Try_Cell;
-            Cols := Try_Cols;
-            Rows := Try_Rows;
-         end if;
-      end loop;
-      if Cell > Limit then
-         Cell := Limit;
-      end if;
-   end Best_Cell;
-
    procedure Pack_Grid
      (Count, Color, Pile : Natural;
       Left, Bottom, Cell : Float;
@@ -248,35 +223,82 @@ package body Recursion is
       end loop;
    end Pack_Grid;
 
+   procedure Square_Cols (Count : Natural; Cols, Rows : out Natural) is
+   begin
+      Cols := 1;
+      while Cols * Cols < Count loop
+         Cols := Cols + 1;
+      end loop;
+      Rows := (Count + Cols - 1) / Cols;
+   end Square_Cols;
+
    procedure Place_Rabbits is
       Cols_A, Rows_A, Cols_B, Rows_B : Natural;
-      Cell_A, Cell_B : Float;
-      Width_A, Height_A, Height_B, Big_A : Float;
+      Cell, Small, Block, Baseline, X : Float;
+      Width_SA, Width_SB, Width_BA, Width_BB : Float;
+      Height_SA, Height_SB, Height_BA, Height_BB : Float;
+      Plus_W : constant Float := 64.0;
+      Arrow_W : constant Float := 88.0;
+      Split : constant Float := 18.0;
    begin
       Dot_N := 0;
       if Terms = 1 then
-         Add_Dot (500.0, 560.0, 150, 0, 2);
+         Add_Dot (500.0, 540.0, 150, 0, 2);
       elsif Terms = 2 then
-         Add_Dot (500.0, 560.0, 150, 1, 2);
+         Add_Dot (500.0, 540.0, 150, 1, 2);
       else
-         Best_Cell (Older, 120.0, 240.0, 22.0, Cols_A, Rows_A, Cell_A);
-         Best_Cell (Newer, 120.0, 240.0, 22.0, Cols_B, Rows_B, Cell_B);
-         Width_A := Float (Cols_A) * Cell_A;
-         Height_A := Float (Rows_A) * Cell_A;
-         Height_B := Float (Rows_B) * Cell_B;
-         Pack_Grid (Older, 0, 0, 28.0, 560.0 - Height_A, Cell_A, Cols_A, Rows_A);
-         Pack_Grid (Newer, 1, 1, 90.0 + Width_A, 560.0 - Height_B, Cell_B, Cols_B, Rows_B);
-         Best_Cell (Older, 170.0, 560.0, 72.0, Cols_A, Rows_A, Cell_A);
-         Best_Cell (Newer, 250.0, 560.0, 72.0, Cols_B, Rows_B, Cell_B);
-         Big_A := Float (Cols_A) * Cell_A;
-         Height_A := Float (Rows_A) * Cell_A;
-         Height_B := Float (Rows_B) * Cell_B;
-         Pack_Grid
-           (Older, 0, 2, 430.0, 200.0 + Float'Max (Height_A, Height_B) - Height_A,
-            Cell_A, Cols_A, Rows_A);
-         Pack_Grid
-           (Newer, 1, 2, 454.0 + Big_A, 200.0 + Float'Max (Height_A, Height_B) - Height_B,
-            Cell_B, Cols_B, Rows_B);
+         Square_Cols (Older, Cols_A, Rows_A);
+         Square_Cols (Newer, Cols_B, Rows_B);
+         Cell := (850.0 - Plus_W - Arrow_W - Split)
+           / (1.6 * Float (Cols_A + Cols_B));
+         Small := Cell * 0.60;
+         Height_SA := Float (Rows_A) * Small;
+         Height_SB := Float (Rows_B) * Small;
+         Height_BA := Float (Rows_A) * Cell;
+         Height_BB := Float (Rows_B) * Cell;
+         Block := Height_SA;
+         if Height_SB > Block then
+            Block := Height_SB;
+         end if;
+         if Height_BA > Block then
+            Block := Height_BA;
+         end if;
+         if Height_BB > Block then
+            Block := Height_BB;
+         end if;
+         if Block > 760.0 then
+            Cell := Cell * 760.0 / Block;
+            Small := Cell * 0.60;
+            Height_SA := Float (Rows_A) * Small;
+            Height_SB := Float (Rows_B) * Small;
+            Height_BA := Float (Rows_A) * Cell;
+            Height_BB := Float (Rows_B) * Cell;
+            Block := Height_SA;
+            if Height_SB > Block then
+               Block := Height_SB;
+            end if;
+            if Height_BA > Block then
+               Block := Height_BA;
+            end if;
+            if Height_BB > Block then
+               Block := Height_BB;
+            end if;
+         end if;
+         Width_SA := Float (Cols_A) * Small;
+         Width_SB := Float (Cols_B) * Small;
+         Width_BA := Float (Cols_A) * Cell;
+         Width_BB := Float (Cols_B) * Cell;
+         Baseline := (1000.0 - Block - 64.0) / 2.0;
+         X := (1000.0
+               - (Width_SA + Plus_W + Width_SB + Arrow_W + Width_BA + Split + Width_BB))
+              / 2.0;
+         Pack_Grid (Older, 0, 0, X, Baseline, Small, Cols_A, Rows_A);
+         X := X + Width_SA + Plus_W;
+         Pack_Grid (Newer, 1, 1, X, Baseline, Small, Cols_B, Rows_B);
+         X := X + Width_SB + Arrow_W;
+         Pack_Grid (Older, 0, 2, X, Baseline, Cell, Cols_A, Rows_A);
+         X := X + Width_BA + Split;
+         Pack_Grid (Newer, 1, 2, X, Baseline, Cell, Cols_B, Rows_B);
       end if;
    end Place_Rabbits;
 

@@ -52,7 +52,7 @@ function sceneMarkup(level) {
     ? `<div class="wall-frame" style="background:${FRAME[level]}">${sceneMarkup(level + 1)}</div>`
     : `<div class="wall-frame blank" style="background:${FRAME[5]}"><div class="mat"></div></div>`;
   return `<div class="scene" data-level="${level}" style="background:${SKY[level - 1]}">
-    <div class="sun"></div>
+    <svg class="sun" viewBox="0 0 100 100" aria-hidden="true"><g fill="#f0a202" stroke="#f0a202" stroke-width="8" stroke-linecap="round"><line x1="50" y1="4" x2="50" y2="18"/><line x1="50" y1="82" x2="50" y2="96"/><line x1="4" y1="50" x2="18" y2="50"/><line x1="82" y1="50" x2="96" y2="50"/><line x1="16" y1="16" x2="26" y2="26"/><line x1="74" y1="74" x2="84" y2="84"/><line x1="84" y1="16" x2="74" y2="26"/><line x1="26" y1="74" x2="16" y2="84"/></g><circle cx="50" cy="50" r="26" fill="#f0a202"/></svg>
     ${FLOWER}
     <div class="ground"></div>
     ${frame}
@@ -68,25 +68,34 @@ function ensureScenes() {
   scenesReady = true;
 }
 
-function applyZoom(depth, animate) {
+function zoomTransform(depth) {
   const cam = frames.querySelector(".scene-cam");
-  const stage = frames.querySelector(".story-stage");
   const scene = frames.querySelector(`.scene[data-level="${depth}"]`);
-  const target = depth === 1 ? scene : scene.parentElement;
-  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const previous = cam.style.transform;
   cam.style.transition = "none";
   cam.style.transform = "none";
-  const stageBox = stage.getBoundingClientRect();
-  const targetBox = target.getBoundingClientRect();
-  const scale = stageBox.width / targetBox.width;
-  const next = `translate(${(-(targetBox.left - stageBox.left) * scale).toFixed(2)}px, ${(-(targetBox.top - stageBox.top) * scale).toFixed(2)}px) scale(${scale.toFixed(4)})`;
+  const camBox = cam.getBoundingClientRect();
+  const targetBox = scene.getBoundingClientRect();
+  const scale = Math.max(camBox.width / targetBox.width, camBox.height / targetBox.height);
+  const originX = targetBox.left - camBox.left + targetBox.width / 2;
+  const originY = targetBox.top - camBox.top + targetBox.height / 2;
+  const tx = camBox.width / 2 - originX * scale;
+  const ty = camBox.height / 2 - originY * scale;
+  return `translate(${tx}px, ${ty}px) scale(${scale})`;
+}
+
+function applyZoom(depth, animate) {
+  const cam = frames.querySelector(".scene-cam");
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const previous = cam.style.transform;
+  const next = zoomTransform(depth);
   if (animate && !reduced && previous) {
+    cam.style.transition = "none";
     cam.style.transform = previous;
     cam.getBoundingClientRect();
     cam.style.transition = "transform 0.7s ease";
     cam.style.transform = next;
   } else {
+    cam.style.transition = "none";
     cam.style.transform = next;
   }
 }
@@ -167,18 +176,19 @@ function drawRabbits(state) {
     marks.push(`<text x="${box.cx}" y="${box.maxY + size}" text-anchor="middle" font-size="${size}" font-weight="700" fill="#241833">${text}</text>`);
   };
   if (state.terms >= 3) {
-    label(piles[0], String(state.older), 36);
-    label(piles[1], String(state.newer), 36);
-    label(piles[2], String(state.value), 48);
+    label(piles[0], String(state.older), 34);
+    label(piles[1], String(state.newer), 34);
+    label(piles[2], String(state.value), 42);
     const left = pileBounds(piles[0]);
     const mid = pileBounds(piles[1]);
     const right = pileBounds(piles[2]);
+    const rowY = (right.minY + right.maxY) / 2;
     const plusX = (left.maxX + mid.minX) / 2;
-    const plusY = (left.minY + left.maxY) / 2;
-    marks.push(`<text x="${plusX}" y="${plusY}" text-anchor="middle" dominant-baseline="middle" font-size="54" font-weight="700" fill="#241833">+</text>`);
-    const arrowY = (right.minY + right.maxY) / 2;
-    marks.push(`<line x1="${mid.maxX + 16}" y1="${arrowY}" x2="${right.minX - 28}" y2="${arrowY}" stroke="#241833" stroke-width="8" stroke-linecap="round"/>`);
-    marks.push(`<polygon points="${right.minX - 12},${arrowY} ${right.minX - 34},${arrowY - 14} ${right.minX - 34},${arrowY + 14}" fill="#241833"/>`);
+    marks.push(`<text x="${plusX}" y="${rowY}" text-anchor="middle" dominant-baseline="middle" font-size="48" font-weight="700" fill="#241833">+</text>`);
+    const x1 = mid.maxX + 18;
+    const x2 = right.minX - 16;
+    marks.push(`<line x1="${x1}" y1="${rowY}" x2="${x2}" y2="${rowY}" stroke="#241833" stroke-width="7" stroke-linecap="round"/>`);
+    marks.push(`<polygon points="${x2},${rowY} ${x2 - 18},${rowY - 12} ${x2 - 18},${rowY + 12}" fill="#241833"/>`);
   } else {
     label(piles[2], String(state.value), 56);
   }
