@@ -2,19 +2,24 @@ package body Recursion is
 
    Pi : constant Float := 3.14159265;
 
-   Frame   : Natural := 1;
-   Branches : Tree_Range := 5;
-   Terms   : Natural := 0;
-   Value   : Natural := 0;
-   Older   : Natural := 0;
-   Newer   : Natural := 0;
-   Status  : Status_Kind := Ok;
+   Frame      : Natural := 1;
+   Branches   : Natural := 5;
+   Draw_Depth : Natural := 5;
+   Terms  : Natural := 0;
+   Status : Status_Kind := Ok;
 
    Seg_N : Natural := 0;
    Segs : array (0 .. Max_Segments * 5 - 1) of Integer := (others => 0);
 
    Dot_N : Natural := 0;
    Dots : array (0 .. Max_Dots * 5 - 1) of Integer := (others => 0);
+
+   Value_At : constant := 0;
+   Older_At : constant := Max_Digits;
+   Newer_At : constant := Max_Digits * 2;
+   Places : array (0 .. Max_Digits * 3 - 1) of Integer := (others => 0);
+   Value_Len, Older_Len, Newer_Len : Natural := 0;
+   Unit_Exp : Natural := 0;
 
    Work_X1, Work_Y1, Work_X2, Work_Y2 :
      array (0 .. Max_Segments - 1) of Float := (others => 0.0);
@@ -27,7 +32,8 @@ package body Recursion is
      (0.0, 1.6, -0.9, 1.2, -0.4, 0.8, -1.1);
 
    function Frame_Depth return Natural is (Frame);
-   function Tree_Depth return Tree_Range is (Branches);
+   function Tree_Depth return Natural is (Branches);
+   function Tree_Visible return Natural is (Draw_Depth);
    function Segment_Count return Natural is (Seg_N);
    function Segment_X1 (Index : Natural) return Integer is (Segs (Index * 5));
    function Segment_Y1 (Index : Natural) return Integer is (Segs (Index * 5 + 1));
@@ -35,9 +41,6 @@ package body Recursion is
    function Segment_Y2 (Index : Natural) return Integer is (Segs (Index * 5 + 3));
    function Segment_Level (Index : Natural) return Integer is (Segs (Index * 5 + 4));
    function Rabbit_Terms return Natural is (Terms);
-   function Rabbit_Value return Natural is (Value);
-   function Rabbit_Older return Natural is (Older);
-   function Rabbit_Newer return Natural is (Newer);
    function Dot_Count return Natural is (Dot_N);
    function Dot_X (Index : Natural) return Integer is (Dots (Index * 5));
    function Dot_Y (Index : Natural) return Integer is (Dots (Index * 5 + 1));
@@ -67,13 +70,13 @@ package body Recursion is
       Meta (3) := Branches;
       Meta (4) := Seg_N;
       Meta (5) := Terms;
-      Meta (6) := Value;
-      Meta (7) := Older;
-      Meta (8) := Newer;
+      Meta (6) := Value_Len;
+      Meta (7) := Older_Len;
+      Meta (8) := Newer_Len;
       Meta (9) := Dot_N;
       Meta (10) := Code (Status);
-      Meta (11) := Max_Tree;
-      Meta (12) := Max_Terms;
+      Meta (11) := Draw_Depth;
+      Meta (12) := Unit_Exp;
    end Publish;
 
    procedure Sin_Cos (Radians : Float; Sine, Cosine : out Float) is
@@ -108,7 +111,7 @@ package body Recursion is
 
    procedure Branch
      (X, Y, Angle, Length : Float;
-      Level : Natural;
+      Level, Base : Natural;
       Factor : Float)
    is
       Sine, Cosine, X2, Y2 : Float;
@@ -123,13 +126,13 @@ package body Recursion is
       Work_Y2 (Work_N) := Y2;
       Work_Level (Work_N) := Level;
       Work_N := Work_N + 1;
-      if Level = Branches then
+      if Level = Draw_Depth then
          return;
       end if;
-      Spread := (22.0 + Wobble (Level mod 7)) * Factor * Pi / 180.0;
+      Spread := (22.0 + Wobble ((Base + Level) mod 7)) * Factor * Pi / 180.0;
       Next := (if Level = 0 then 0.85 else Length * 0.66);
-      Branch (X2, Y2, Angle + Spread, Next, Level + 1, Factor * 0.97);
-      Branch (X2, Y2, Angle - Spread, Next, Level + 1, Factor * 0.97);
+      Branch (X2, Y2, Angle + Spread, Next, Level + 1, Base, Factor * 0.97);
+      Branch (X2, Y2, Angle - Spread, Next, Level + 1, Base, Factor * 0.97);
    end Branch;
 
    procedure Fit_Tree is
@@ -166,27 +169,165 @@ package body Recursion is
    end Fit_Tree;
 
    procedure Grow_Tree is
+      Base : Natural;
    begin
+      if Branches <= Visible_Cap then
+         Base := 0;
+         Draw_Depth := Branches;
+      else
+         Base := Branches - Visible_Cap;
+         Draw_Depth := Visible_Cap;
+      end if;
       Work_N := 0;
-      Branch (0.0, 0.0, Pi / 2.0, 0.38, 0, 1.0);
+      Branch (0.0, 0.0, Pi / 2.0, 0.38, 0, Base, 1.0);
       Fit_Tree;
    end Grow_Tree;
 
-   function Fib (N : Natural) return Natural is
-      A : Natural := 1;
-      B : Natural := 1;
-      C : Natural;
+   procedure Clear_Span (Start : Natural) is
    begin
-      if N <= 2 then
+      for I in Start .. Start + Max_Digits - 1 loop
+         Places (I) := 0;
+      end loop;
+   end Clear_Span;
+
+   procedure Write_One (Start : Natural; Len : out Natural) is
+   begin
+      Clear_Span (Start);
+      Places (Start) := 1;
+      Len := 1;
+   end Write_One;
+
+   procedure Copy_Span (From, Into, Len : Natural) is
+   begin
+      for I in 0 .. Max_Digits - 1 loop
+         if I < Len then
+            Places (Into + I) := Places (From + I);
+         else
+            Places (Into + I) := 0;
+         end if;
+      end loop;
+   end Copy_Span;
+
+   function Fits (Len : Natural) return Boolean is (Len in 1 .. 9);
+
+   function As_Natural (Start, Len : Natural) return Natural is
+      Acc : Natural := 0;
+   begin
+      if not Fits (Len) then
+         return 0;
+      end if;
+      for I in reverse 0 .. Len - 1 loop
+         Acc := Acc * 10 + Natural (Places (Start + I));
+      end loop;
+      return Acc;
+   end As_Natural;
+
+   function As_Text (Start, Len : Natural) return String is
+      Text : String (1 .. Len);
+   begin
+      if Len = 0 then
+         return "0";
+      end if;
+      for I in 0 .. Len - 1 loop
+         Text (Len - I) := Character'Val (Character'Pos ('0') + Places (Start + I));
+      end loop;
+      return Text;
+   end As_Text;
+
+   function Rabbit_Value return Natural is (As_Natural (Value_At, Value_Len));
+   function Rabbit_Older return Natural is (As_Natural (Older_At, Older_Len));
+   function Rabbit_Newer return Natural is (As_Natural (Newer_At, Newer_Len));
+   function Rabbit_Value_Text return String is (As_Text (Value_At, Value_Len));
+   function Rabbit_Older_Text return String is (As_Text (Older_At, Older_Len));
+   function Rabbit_Newer_Text return String is (As_Text (Newer_At, Newer_Len));
+   function Rabbit_Unit_Exp return Natural is (Unit_Exp);
+
+   function Shown (Start, Len, Exp : Natural) return Natural is
+      Acc : Natural := 0;
+   begin
+      if Len = 0 or else Exp > Len then
+         return 0;
+      end if;
+      if Exp = Len then
+         if Places (Start + Len - 1) >= 5 then
+            return 1;
+         end if;
+         return 0;
+      end if;
+      for I in reverse Exp .. Len - 1 loop
+         Acc := Acc * 10 + Natural (Places (Start + I));
+      end loop;
+      if Exp > 0 and then Places (Start + Exp - 1) >= 5 then
+         Acc := Acc + 1;
+      end if;
+      return Acc;
+   end Shown;
+
+   function Unit_For (Start, Len : Natural) return Natural is
+      Top : Natural;
+   begin
+      if Len <= 1 then
+         return 0;
+      end if;
+      if Len = 2 then
+         Top := Natural (Places (Start + 1)) * 10 + Natural (Places (Start));
+         if Top <= 89 then
+            return 0;
+         end if;
          return 1;
       end if;
-      for K in 3 .. N loop
-         C := A + B;
-         A := B;
-         B := C;
+      Top := Natural (Places (Start + Len - 1)) * 10
+        + Natural (Places (Start + Len - 2));
+      if Top <= 89 then
+         return Len - 2;
+      end if;
+      return Len - 1;
+   end Unit_For;
+
+   procedure Add_Spans
+     (A, A_Len, B, B_Len, Dest : Natural;
+      Dest_Len : out Natural;
+      Overflow : out Boolean)
+   is
+      Tmp : array (0 .. Max_Digits - 1) of Integer := (others => 0);
+      Carry, Sum, N : Natural;
+   begin
+      Overflow := False;
+      N := A_Len;
+      if B_Len > N then
+         N := B_Len;
+      end if;
+      Carry := 0;
+      if N > 0 then
+         for I in 0 .. N - 1 loop
+         Sum := Carry;
+         if I < A_Len then
+            Sum := Sum + Natural (Places (A + I));
+         end if;
+         if I < B_Len then
+            Sum := Sum + Natural (Places (B + I));
+         end if;
+         Tmp (I) := Integer (Sum mod 10);
+            Carry := Sum / 10;
+         end loop;
+      end if;
+      if Carry > 0 then
+         if N >= Max_Digits then
+            Overflow := True;
+            Dest_Len := Max_Digits;
+         else
+            Tmp (N) := Integer (Carry);
+            Dest_Len := N + 1;
+         end if;
+      elsif N = 0 then
+         Dest_Len := 1;
+      else
+         Dest_Len := N;
+      end if;
+      for I in 0 .. Max_Digits - 1 loop
+         Places (Dest + I) := Tmp (I);
       end loop;
-      return B;
-   end Fib;
+   end Add_Spans;
 
    procedure Add_Dot
      (X, Y : Float;
@@ -243,12 +384,23 @@ package body Recursion is
    begin
       Dot_N := 0;
       if Terms = 1 then
-         Add_Dot (500.0, 540.0, 150, 0, 2);
+         Add_Dot (500.0, 500.0, 150, 0, 2);
       elsif Terms = 2 then
-         Add_Dot (500.0, 540.0, 150, 1, 2);
+         Add_Dot (500.0, 500.0, 150, 1, 2);
       else
-         Square_Cols (Older, Cols_A, Rows_A);
-         Square_Cols (Newer, Cols_B, Rows_B);
+         Unit_Exp := Unit_For (Value_At, Value_Len);
+         declare
+            Count_A : Natural := Shown (Older_At, Older_Len, Unit_Exp);
+            Count_B : Natural := Shown (Newer_At, Newer_Len, Unit_Exp);
+         begin
+            if Older_Len > 0 and then Count_A = 0 then
+               Count_A := 1;
+            end if;
+            if Newer_Len > 0 and then Count_B = 0 then
+               Count_B := 1;
+            end if;
+            Square_Cols (Count_A, Cols_A, Rows_A);
+            Square_Cols (Count_B, Cols_B, Rows_B);
          Cell := (850.0 - Plus_W - Arrow_W - Split)
            / (1.6 * Float (Cols_A + Cols_B));
          Small := Cell * 0.60;
@@ -288,26 +440,30 @@ package body Recursion is
          Width_SB := Float (Cols_B) * Small;
          Width_BA := Float (Cols_A) * Cell;
          Width_BB := Float (Cols_B) * Cell;
-         Baseline := (1000.0 - Block - 64.0) / 2.0;
+         Baseline := 470.0 - Block * 0.5;
          X := (1000.0
                - (Width_SA + Plus_W + Width_SB + Arrow_W + Width_BA + Split + Width_BB))
               / 2.0;
-         Pack_Grid (Older, 0, 0, X, Baseline, Small, Cols_A, Rows_A);
+         Pack_Grid (Count_A, 0, 0, X, Baseline, Small, Cols_A, Rows_A);
          X := X + Width_SA + Plus_W;
-         Pack_Grid (Newer, 1, 1, X, Baseline, Small, Cols_B, Rows_B);
+         Pack_Grid (Count_B, 1, 1, X, Baseline, Small, Cols_B, Rows_B);
          X := X + Width_SB + Arrow_W;
-         Pack_Grid (Older, 0, 2, X, Baseline, Cell, Cols_A, Rows_A);
+         Pack_Grid (Count_A, 0, 2, X, Baseline, Cell, Cols_A, Rows_A);
          X := X + Width_BA + Split;
-         Pack_Grid (Newer, 1, 2, X, Baseline, Cell, Cols_B, Rows_B);
+         Pack_Grid (Count_B, 1, 2, X, Baseline, Cell, Cols_B, Rows_B);
+         end;
       end if;
    end Place_Rabbits;
 
    procedure Reset_Rabbits is
    begin
       Terms := 1;
-      Value := 1;
-      Older := 0;
-      Newer := 0;
+      Write_One (Value_At, Value_Len);
+      Older_Len := 0;
+      Newer_Len := 0;
+      Clear_Span (Older_At);
+      Clear_Span (Newer_At);
+      Unit_Exp := 0;
       Status := Ok;
       Place_Rabbits;
       Publish;
@@ -346,33 +502,68 @@ package body Recursion is
 
    procedure Set_Tree (Depth : Integer) is
    begin
-      if Depth < 0 then
+      if Depth <= 0 then
          Branches := 0;
-      elsif Depth > Max_Tree then
-         Branches := Max_Tree;
+         Status := Ok;
+      elsif Depth >= Depth_Ceiling then
+         Branches := Depth_Ceiling;
+         Status := At_Top;
       else
-         Branches := Depth;
+         Branches := Natural (Depth);
+         Status := Ok;
       end if;
-      Status := Ok;
       Grow_Tree;
       Publish;
    end Set_Tree;
 
    procedure Next_Rabbit is
+      Hold_Len, New_Len : Natural;
+      Overflow : Boolean;
    begin
-      if Terms = Max_Terms then
+      if Terms >= Depth_Ceiling then
          Status := Full;
          Publish;
          return;
       end if;
-      Terms := Terms + 1;
-      Value := Fib (Terms);
-      if Terms >= 3 then
-         Older := Fib (Terms - 2);
-         Newer := Fib (Terms - 1);
+      if Terms = 1 then
+         Terms := 2;
+         Write_One (Value_At, Value_Len);
+         Older_Len := 0;
+         Newer_Len := 0;
+      elsif Terms = 2 then
+         Terms := 3;
+         Write_One (Older_At, Older_Len);
+         Write_One (Newer_At, Newer_Len);
+         Clear_Span (Value_At);
+         Places (Value_At) := 2;
+         Value_Len := 1;
       else
-         Older := 0;
-         Newer := 0;
+         declare
+            Saved : array (0 .. Max_Digits - 1) of Integer := (others => 0);
+            Saved_Len : constant Natural := Value_Len;
+         begin
+            for I in 0 .. Saved_Len - 1 loop
+               Saved (I) := Places (Value_At + I);
+            end loop;
+            Add_Spans
+              (Newer_At, Newer_Len, Value_At, Value_Len, Value_At,
+               New_Len, Overflow);
+            if Overflow then
+               Status := Full;
+               Publish;
+               return;
+            end if;
+            Hold_Len := Newer_Len;
+            Copy_Span (Newer_At, Older_At, Hold_Len);
+            Older_Len := Hold_Len;
+            Clear_Span (Newer_At);
+            for I in 0 .. Saved_Len - 1 loop
+               Places (Newer_At + I) := Saved (I);
+            end loop;
+            Newer_Len := Saved_Len;
+            Value_Len := New_Len;
+            Terms := Terms + 1;
+         end;
       end if;
       Status := Ok;
       Place_Rabbits;
@@ -382,6 +573,7 @@ package body Recursion is
    function Meta_Address return System.Address is (Meta'Address);
    function Segment_Address return System.Address is (Segs'Address);
    function Dot_Address return System.Address is (Dots'Address);
+   function Digit_Address return System.Address is (Places'Address);
 
    procedure Reset_Exported is
    begin

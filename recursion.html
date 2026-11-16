@@ -6,8 +6,8 @@
 <meta name="description" content="Frames inside frames, a tree that branches, and rabbits counted in dots.">
 <title>Recursion</title>
 <link rel="icon" href="favicon.svg">
-<link rel="stylesheet" href="styles.css?v=9">
-<script type="module" src="recursion.js?v=3"></script>
+<link rel="stylesheet" href="styles.css?v=10">
+<script type="module" src="recursion.js?v=4"></script>
 </head>
 <body data-page-title="chapterRec">
 <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -48,17 +48,18 @@
 
   <section class="rec-part" aria-labelledby="tree-title">
     <h2 id="tree-title" data-i18n="recTree">Tree</h2>
-    <svg id="tree" viewBox="0 0 1000 1000" role="img" aria-labelledby="tree-title"></svg>
-    <label class="fade rec-depth">
-      <span data-i18n="recDepth">Depth</span>
-      <input id="depth" type="range" min="0" max="10" value="5" data-i18n-aria="recDepth" aria-label="Depth">
-      <strong id="depth-n">5</strong>
-    </label>
+    <div class="level-readout"><strong id="tree-n">5</strong></div>
+    <svg id="tree" class="tap-picture" viewBox="0 0 1000 1000" role="button" tabindex="0" data-i18n-aria="recGrow" aria-label="Grow"></svg>
+    <div class="actions">
+      <button type="button" id="tree-grow" class="text-button"><span data-i18n="recGrow">Grow</span></button>
+      <button type="button" id="tree-back" class="text-button"><span data-i18n="recBack">Back</span></button>
+      <button type="button" id="tree-reset" class="text-button"><span data-i18n="reset">Reset</span></button>
+    </div>
   </section>
 
   <section class="rec-part" aria-labelledby="rabbits-title">
     <h2 id="rabbits-title" data-i18n="recRabbits">Rabbits</h2>
-    <svg id="rabbits" viewBox="0 0 1000 1000" role="img" aria-labelledby="rabbits-title"></svg>
+    <svg id="rabbits" class="tap-picture" viewBox="0 0 1000 1000" role="button" tabindex="0" data-i18n-aria="recNext" aria-label="Next"></svg>
     <p class="still"><strong id="rabbit-n">0</strong></p>
     <div class="actions">
       <button type="button" id="next" class="text-button"><span data-i18n="recNext">Next</span></button>

@@ -1,5 +1,12 @@
 # Release history
 
+## v0.5.2
+
+The tree and the rabbits keep going.
+
+- A tap on the tree grows one more level. Past ten splits the view zooms into one branch and only the visible twigs are drawn. Reset returns to the trunk. Back steps out one level.
+- A tap on the rabbits adds the next count, with no stop at 89. Big counts are groups of dots with a legend, and the full number sits under each pile.
+
 ## v0.5.1
 
 Stories keep going.

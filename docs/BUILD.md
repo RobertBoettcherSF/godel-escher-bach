@@ -54,7 +54,7 @@ Integers are 32-bit. Character arrays are bytes. `miu_reset`, `miu_apply(rule, p
 
 `figure.wasm` exports the outlines, the eyes, the kind of each tile, and the morph, uniform stage, tap and undo. Dark tiles and cream tiles share every edge. The page draws the polygons Ada returns.
 
-`recursion.wasm` exports the frame depth, the tree segments and the rabbit dots. Deeper keeps going, and Back stops at the outer frame. The tree slider asks for a depth from 0 to 10. Next appends the next rabbit count and stops at 89. The page draws those numbers.
+`recursion.wasm` exports the frame depth, the tree segments and the rabbit digits. Deeper keeps going, and Back stops at the outer frame. A tap grows the tree, and past ten splits the picture zooms into one branch. Next adds the next rabbit count with no small cap; big counts are drawn as larger dots with a legend.
 
 ## Licences
 

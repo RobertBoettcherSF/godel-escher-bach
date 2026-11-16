@@ -5,14 +5,13 @@ with System;
 
 package Recursion is
 
-   --  Far past any visit. Deeper saturates here instead of wrapping.
+   --  Far past any visit. Deeper, Grow and Next saturate here.
    Depth_Ceiling : constant := 1_000_000;
-   Max_Tree      : constant := 10;
-   Max_Terms     : constant := 11;
+   --  Past this many splits the picture zooms into one branch.
+   Visible_Cap   : constant := 10;
+   Max_Digits    : constant := 256;
    Max_Segments  : constant := 2047;
-   Max_Dots      : constant := 200;
-
-   subtype Tree_Range is Natural range 0 .. Max_Tree;
+   Max_Dots      : constant := 400;
 
    type Status_Kind is (Ok, At_Bottom, At_Top, Full);
 
@@ -25,7 +24,8 @@ package Recursion is
    procedure Reset_Rabbits;
 
    function Frame_Depth return Natural;
-   function Tree_Depth return Tree_Range;
+   function Tree_Depth return Natural;
+   function Tree_Visible return Natural;
    function Segment_Count return Natural;
    function Segment_X1 (Index : Natural) return Integer;
    function Segment_Y1 (Index : Natural) return Integer;
@@ -37,6 +37,10 @@ package Recursion is
    function Rabbit_Value return Natural;
    function Rabbit_Older return Natural;
    function Rabbit_Newer return Natural;
+   function Rabbit_Value_Text return String;
+   function Rabbit_Older_Text return String;
+   function Rabbit_Newer_Text return String;
+   function Rabbit_Unit_Exp return Natural;
    function Dot_Count return Natural;
    function Dot_X (Index : Natural) return Integer;
    function Dot_Y (Index : Natural) return Integer;
@@ -51,6 +55,8 @@ package Recursion is
      with Export, Convention => C, External_Name => "recursion_segments";
    function Dot_Address return System.Address
      with Export, Convention => C, External_Name => "recursion_dots";
+   function Digit_Address return System.Address
+     with Export, Convention => C, External_Name => "recursion_digits";
 
    procedure Reset_Exported
      with Export, Convention => C, External_Name => "recursion_reset";
