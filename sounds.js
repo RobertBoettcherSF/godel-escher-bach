@@ -151,6 +151,60 @@ export function play(name, rule) {
 
 const scale = [261.63, 293.66, 329.63, 349.23, 392.0, 440.0, 493.88];
 
+const sounding = new Set();
+
+export function armAudio() {
+  if (muted) return false;
+  const AC = globalThis.AudioContext || globalThis.webkitAudioContext;
+  if (!AC) return false;
+  try {
+    if (!context) context = new AC();
+    if (context.state === "suspended") context.resume().catch(() => {});
+  } catch {
+    return false;
+  }
+  return true;
+}
+
+export function toneAt(pitch, voice) {
+  if (!context || muted) return;
+  try {
+    const freq = scale[Math.max(0, Math.min(6, pitch))] || 261.63;
+    const osc = context.createOscillator();
+    const gain = context.createGain();
+    const start = context.currentTime;
+    osc.type = voice === 0 ? "sine" : "triangle";
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.0001, start);
+    gain.gain.exponentialRampToValueAtTime(0.05, start + 0.03);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.3);
+    osc.connect(gain);
+    gain.connect(context.destination);
+    osc.start(start);
+    osc.stop(start + 0.32);
+    sounding.add(osc);
+    osc.onended = () => sounding.delete(osc);
+  } catch {
+    /* autoplay limits */
+  }
+}
+
+export function silenceTones() {
+  if (!context) {
+    sounding.clear();
+    return;
+  }
+  const now = context.currentTime;
+  for (const osc of sounding) {
+    try {
+      osc.stop(now);
+    } catch {
+      /* already stopped */
+    }
+  }
+  sounding.clear();
+}
+
 export function playDuet(forward, backward) {
   if (muted) return false;
   const AC = globalThis.AudioContext || globalThis.webkitAudioContext;

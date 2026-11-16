@@ -27,6 +27,15 @@ package Crab is
 
    function Shown_Length return Natural;
 
+   Step_Ms : constant := 340;
+
+   function Step_Milliseconds return Natural;
+   --  Both voices share a step. The upper staff is the tune, left to right.
+   --  The lower staff is that tune written backwards, so the backward voice
+   --  walks it from the left as well. The markers meet on the middle step.
+   function Play_Column (Voice : Natural; Beat : Natural) return Integer;
+
+   procedure Set_Beat (Beat : Integer);
    procedure Cycle_Note (Index : Natural);
    procedure Select_Melody (Index : Natural);
    function Note (Index : Natural) return Natural;
@@ -57,5 +66,7 @@ package Crab is
      with Export, Convention => C, External_Name => "crab_cycle_note";
    procedure Select_Melody_Exported (Index : Integer)
      with Export, Convention => C, External_Name => "crab_select_melody";
+   procedure Set_Beat_Exported (Beat : Integer)
+     with Export, Convention => C, External_Name => "crab_set_beat";
 
 end Crab;

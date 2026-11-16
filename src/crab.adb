@@ -14,7 +14,8 @@ package body Crab is
    Mirrors      : Pitch_Line := (4, 6, 5, 4, 3, 2, 1, 0);
    Shown        : Natural := 0;
    Melody_Index : Natural := 0;
-   Meta         : array (1 .. 6) of Integer := (others => 0);
+   Play_Beat    : Integer := -1;
+   Meta         : array (1 .. 10) of Integer := (others => 0);
 
    function Letter (Index : Natural) return Natural is
    begin
@@ -141,6 +142,17 @@ package body Crab is
 
    function Shown_Length return Natural is (Shown);
 
+   function Step_Milliseconds return Natural is (Step_Ms);
+
+   function Play_Column (Voice : Natural; Beat : Natural) return Integer is
+      Slot : constant Natural := Beat mod Max_Notes;
+   begin
+      if Voice > 1 then
+         return -1;
+      end if;
+      return Integer (Slot);
+   end Play_Column;
+
    procedure Publish is
       Source, Back : Melody;
    begin
@@ -150,6 +162,15 @@ package body Crab is
       Meta (4) := Pitch_Max;
       Meta (5) := Melody_Count;
       Meta (6) := Integer (Melody_Index);
+      Meta (7) := Step_Ms;
+      Meta (8) := Play_Beat;
+      if Play_Beat < 0 then
+         Meta (9) := -1;
+         Meta (10) := -1;
+      else
+         Meta (9) := Play_Column (0, Natural (Play_Beat));
+         Meta (10) := Play_Column (1, Natural (Play_Beat));
+      end if;
       for I in Source'Range loop
          Source (I) := Natural (Pitches (I - 1));
       end loop;
@@ -234,6 +255,16 @@ package body Crab is
       Publish;
    end Select_Melody;
 
+   procedure Set_Beat (Beat : Integer) is
+   begin
+      if Beat < 0 then
+         Play_Beat := -1;
+      else
+         Play_Beat := Integer (Natural (Beat) mod Max_Notes);
+      end if;
+      Publish;
+   end Set_Beat;
+
    procedure Reset is
    begin
       Letters := (others => 0);
@@ -288,5 +319,10 @@ package body Crab is
          Select_Melody (Natural (Index));
       end if;
    end Select_Melody_Exported;
+
+   procedure Set_Beat_Exported (Beat : Integer) is
+   begin
+      Set_Beat (Beat);
+   end Set_Beat_Exported;
 
 end Crab;

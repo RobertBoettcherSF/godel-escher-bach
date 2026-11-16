@@ -152,6 +152,26 @@ begin
       end;
    end loop;
 
+   Check (Crab.Step_Milliseconds = 340, "step length");
+   Check (Crab.Play_Column (9, 1) = -1, "no third voice");
+   for Beat in 0 .. 24 loop
+      declare
+         Slot : constant Natural := Beat mod Crab.Max_Notes;
+      begin
+         Check (Crab.Play_Column (0, Beat) = Integer (Slot), "upper column");
+         Check (Crab.Play_Column (1, Beat) = Integer (Slot), "lower column");
+      end;
+   end loop;
+   Crab.Select_Melody (0);
+   for Beat in 0 .. Crab.Max_Notes - 1 loop
+      declare
+         Col : constant Natural := Natural (Crab.Play_Column (1, Beat));
+      begin
+         Check (Crab.Mirror_Note (Col) = Crab.Note (Crab.Max_Notes - 1 - Beat),
+                "the step plays the tune backwards");
+      end;
+   end loop;
+
    if Failures = 0 then
       Put_Line ("crab smoke ok");
    else

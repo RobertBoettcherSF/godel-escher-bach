@@ -8,7 +8,7 @@ const e = instance.exports;
 
 function read() {
   const memory = e.memory.buffer;
-  const meta = new Int32Array(memory, e.crab_meta() >>> 0, 6);
+  const meta = new Int32Array(memory, e.crab_meta() >>> 0, 10);
   return {
     tiles: meta[0],
     palindrome: meta[1],
@@ -16,6 +16,10 @@ function read() {
     pitchMax: meta[3],
     melodyCount: meta[4],
     melody: meta[5],
+    stepMs: meta[6],
+    beat: meta[7],
+    upper: meta[8],
+    lower: meta[9],
     letters: Array.from(new Int32Array(memory, e.crab_letters() >>> 0, 11)),
     pitches: Array.from(new Int32Array(memory, e.crab_notes() >>> 0, 8)),
     mirrors: Array.from(new Int32Array(memory, e.crab_mirrors() >>> 0, 8))
@@ -107,4 +111,19 @@ test("the row and the mirrored voice come from Ada", () => {
     assert.deepEqual(st.mirrors, st.pitches.slice().reverse());
     assert.deepEqual(st.mirrors.slice().reverse(), st.pitches);
   }
+
+  e.crab_reset();
+  assert.equal(read().stepMs, 340);
+  assert.equal(read().beat, -1);
+  e.crab_set_beat(2);
+  st = read();
+  assert.equal(st.beat, 2);
+  assert.equal(st.upper, 2);
+  assert.equal(st.lower, 2);
+  assert.equal(st.mirrors[st.lower], st.pitches[7 - st.upper]);
+  e.crab_set_beat(8);
+  assert.equal(read().beat, 0);
+  e.crab_set_beat(-1);
+  assert.equal(read().beat, -1);
+  assert.equal(read().upper, -1);
 });
