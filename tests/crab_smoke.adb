@@ -171,6 +171,9 @@ begin
                 "lower pitch is the other end");
          Check (Crab.Sounding_Pitch (1, S) = Crab.Mirror_Note (S),
                 "lower pitch is the retrograde");
+         Check (Crab.Staff_Pitch (0, S) = Crab.Staff_Pitch (1, S),
+                "both staves show the same note");
+         Check (Crab.Staff_Pitch (0, S) = Crab.Note (S), "the staff is the written line");
       end loop;
    end loop;
 

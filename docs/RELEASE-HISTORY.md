@@ -1,5 +1,12 @@
 # Release history
 
+## v0.6.4
+
+Both staves stay on the one written line.
+
+- After a tap, Another, or a language change, Ada copies that line into both staves, including while Play is running.
+- The upper marker still walks left to right and the lower marker walks right to left.
+
 ## v0.6.3
 
 One written line, read from both ends.

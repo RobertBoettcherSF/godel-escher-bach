@@ -34,6 +34,8 @@ package Crab is
    --  right to left, so at step s it sounds the pitch at column 7-s.
    function Play_Column (Voice : Natural; Beat : Natural) return Integer;
    function Sounding_Pitch (Voice : Natural; Beat : Natural) return Natural;
+   --  Both staves draw this one written line. Voice 0 and voice 1 match.
+   function Staff_Pitch (Voice : Natural; Index : Natural) return Natural;
 
    procedure Set_Beat (Beat : Integer);
    procedure Cycle_Note (Index : Natural);
@@ -53,6 +55,10 @@ package Crab is
      with Export, Convention => C, External_Name => "crab_notes";
    function Mirror_Address return System.Address
      with Export, Convention => C, External_Name => "crab_mirrors";
+   function Upper_Line_Address return System.Address
+     with Export, Convention => C, External_Name => "crab_upper_line";
+   function Lower_Line_Address return System.Address
+     with Export, Convention => C, External_Name => "crab_lower_line";
 
    procedure Reset_Exported
      with Export, Convention => C, External_Name => "crab_reset";

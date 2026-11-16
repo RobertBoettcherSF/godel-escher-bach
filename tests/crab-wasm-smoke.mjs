@@ -22,8 +22,18 @@ function read() {
     lower: meta[9],
     letters: Array.from(new Int32Array(memory, e.crab_letters() >>> 0, 11)),
     pitches: Array.from(new Int32Array(memory, e.crab_notes() >>> 0, 8)),
-    mirrors: Array.from(new Int32Array(memory, e.crab_mirrors() >>> 0, 8))
+    mirrors: Array.from(new Int32Array(memory, e.crab_mirrors() >>> 0, 8)),
+    upperLine: Array.from(new Int32Array(memory, e.crab_upper_line() >>> 0, 8)),
+    lowerLine: Array.from(new Int32Array(memory, e.crab_lower_line() >>> 0, 8))
   };
+}
+
+function assertSameLine(st) {
+  assert.equal(st.upperLine.length, st.notes);
+  for (let i = 0; i < st.notes; i += 1) {
+    assert.equal(st.upperLine[i], st.lowerLine[i], `staff ${i}`);
+    assert.equal(st.upperLine[i], st.pitches[i], `written ${i}`);
+  }
 }
 
 function setText(text) {
@@ -127,4 +137,17 @@ test("the row and the mirrored voice come from Ada", () => {
   e.crab_set_beat(-1);
   assert.equal(read().beat, -1);
   assert.equal(read().upper, -1);
+
+  e.crab_reset();
+  e.crab_set_beat(1);
+  const before = read().upperLine.slice();
+  e.crab_cycle_note(6);
+  st = read();
+  assert.notEqual(st.upperLine[6], before[6]);
+  assertSameLine(st);
+  assert.equal(st.beat, 1);
+  e.crab_select_melody(2);
+  assertSameLine(read());
+  e.crab_cycle_note(0);
+  assertSameLine(read());
 });

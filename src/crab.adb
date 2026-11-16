@@ -12,6 +12,8 @@ package body Crab is
    Letters      : array (0 .. Max_Tiles - 1) of Integer := (others => 0);
    Pitches      : Pitch_Line := Catalog (0);
    Mirrors      : Pitch_Line := (4, 6, 5, 4, 3, 2, 1, 0);
+   Upper_Line   : Pitch_Line := Catalog (0);
+   Lower_Line   : Pitch_Line := Catalog (0);
    Shown        : Natural := 0;
    Melody_Index : Natural := 0;
    Play_Beat    : Integer := -1;
@@ -165,6 +167,17 @@ package body Crab is
       return Note (Natural (Col));
    end Sounding_Pitch;
 
+   function Staff_Pitch (Voice : Natural; Index : Natural) return Natural is
+   begin
+      if Index >= Max_Notes or else Voice > 1 then
+         return 0;
+      end if;
+      if Voice = 0 then
+         return Natural (Upper_Line (Index));
+      end if;
+      return Natural (Lower_Line (Index));
+   end Staff_Pitch;
+
    procedure Publish is
       Source, Back : Melody;
    begin
@@ -190,6 +203,8 @@ package body Crab is
       for I in Back'Range loop
          Mirrors (I - 1) := Integer (Back (I));
       end loop;
+      Upper_Line := Pitches;
+      Lower_Line := Pitches;
    end Publish;
 
    procedure Clear_Letters is
@@ -288,6 +303,8 @@ package body Crab is
    function Letter_Address return System.Address is (Letters'Address);
    function Note_Address return System.Address is (Pitches'Address);
    function Mirror_Address return System.Address is (Mirrors'Address);
+   function Upper_Line_Address return System.Address is (Upper_Line'Address);
+   function Lower_Line_Address return System.Address is (Lower_Line'Address);
 
    procedure Reset_Exported is
    begin
