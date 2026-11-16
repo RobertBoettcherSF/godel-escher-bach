@@ -15,7 +15,7 @@ GitHub Pages serves the root of `main`. There is no build on the server. `miu.wa
 ./tools/stamp.sh
 ```
 
-The stamp is `v0.3.2 bYYYYMMDD-HHMM <shortcommit>`. The clock is Europe/Berlin. The short commit is HEAD at the moment of stamping, so it names the source commit and the stamp commit comes next. `version.txt` and every `<span class="version">` carry the same line.
+The stamp is `v0.4 bYYYYMMDD-HHMM <shortcommit>`. The clock is Europe/Berlin. The short commit is HEAD at the moment of stamping, so it names the source commit and the stamp commit comes next. `version.txt` and every `<span class="version">` carry the same line.
 
 ## Words
 

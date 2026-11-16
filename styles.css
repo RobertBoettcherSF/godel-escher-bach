@@ -325,12 +325,23 @@ footer {
 .hint-line { font-weight: 700; letter-spacing: 0.04em; }
 
 .picture-frame {
-  background: #fff6ea;
+  background: #e2d0ba;
   border: 1px solid var(--line);
   border-radius: 28px;
   overflow: hidden;
 }
-#picture { width: 100%; height: auto; display: block; touch-action: manipulation; background: #fff6ea; }
+#picture { width: 100%; height: auto; display: block; touch-action: manipulation; background: #e2d0ba; overflow: hidden; }
+.bird { cursor: pointer; }
+.bird .halo { opacity: 0; pointer-events: none; }
+.bird.lit .halo { animation: bird-pulse 1.15s ease-in-out infinite; }
+#picture circle { pointer-events: none; }
+@keyframes bird-pulse {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 0.95; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bird.lit .halo { animation: none; opacity: 0.9; }
+}
 .animal { cursor: pointer; outline: none; }
 .animal .body { stroke: none; }
 .animal.gap .body {
@@ -360,12 +371,13 @@ footer {
 .pupil { fill: #241833; }
 .fade {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: 32px 1fr 32px;
   gap: 12px;
   align-items: center;
   margin: 14px 0;
   font-weight: 700;
 }
+.mark-icon { width: 32px; height: 24px; display: block; }
 .fade input { width: 100%; accent-color: var(--ink); min-height: 44px; }
 @keyframes wiggle {
   0%, 100% { transform: translateY(0); }

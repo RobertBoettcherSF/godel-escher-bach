@@ -9,52 +9,64 @@ const e = instance.exports;
 function read() {
   const shapes = e.figure_shapes();
   const memory = e.memory.buffer;
-  const meta = new Int32Array(memory, e.figure_meta() >>> 0, 8);
+  const meta = new Int32Array(memory, e.figure_meta() >>> 0, 9);
+  const points = meta[6];
   return {
     shapes,
-    blend: meta[0],
-    front: meta[1],
-    taps: meta[2],
-    hidden: meta[3],
-    found: meta[4],
-    error: meta[5],
-    last: meta[7],
-    layer: new Int32Array(memory, e.figure_shape_layer() >>> 0, shapes),
-    kind: new Int32Array(memory, e.figure_shape_kind() >>> 0, shapes),
-    ink: new Int32Array(memory, e.figure_shape_ink() >>> 0, shapes)
+    morph: meta[0],
+    uniform: meta[1],
+    highlight: meta[2],
+    taps: meta[3],
+    error: meta[4],
+    points,
+    eyes: meta[7],
+    last: meta[8],
+    kind: new Int32Array(memory, e.figure_kind() >>> 0, shapes),
+    xy: new Float32Array(memory, e.figure_outline_xy() >>> 0, shapes * points * 2)
   };
 }
 
-test("each animal is one layer, and two swaps restore the inks", () => {
+test("birds share edges, and a tap lights one set", () => {
   e.figure_reset();
   let st = read();
-  assert.equal(st.shapes, 8);
-  let birds = 0;
-  let fish = 0;
+  assert.equal(st.shapes, 440);
+  assert.equal(st.points, 1597);
+  assert.equal(st.morph, 1);
+  let dark = 0;
+  let cream = 0;
   for (let shape = 0; shape < st.shapes; shape += 1) {
-    assert.ok(st.layer[shape] === 0 || st.layer[shape] === 1);
-    assert.equal(st.kind[shape], st.layer[shape]);
-    assert.equal(st.ink[shape], st.layer[shape] === 0 ? 255 : 0);
-    if (st.layer[shape] === 0) birds += 1;
-    else fish += 1;
+    assert.ok(st.kind[shape] === 0 || st.kind[shape] === 1);
+    if (st.kind[shape] === 0) dark += 1;
+    else cream += 1;
   }
-  assert.equal(birds + fish, st.shapes);
-  assert.ok(birds > 0 && fish > 0);
-  const start = Array.from(st.ink);
-  const hidden = st.hidden;
-  assert.equal(st.layer[hidden], 1);
-  e.figure_tap(hidden);
+  assert.equal(dark, 220);
+  assert.equal(cream, 220);
+
+  const top = ((8 - -1) * 20 + (2 - -11)) * 2;
+  const grown = read().xy[(top * 1597 + 40) * 2 + 1];
+  e.figure_uniform(0);
   st = read();
-  assert.equal(st.found, 1);
-  assert.equal(st.last, hidden);
-  assert.equal(st.blend, 100);
-  assert.equal(st.front, 1);
+  assert.equal(st.morph, 0);
+  assert.equal(st.eyes, 0);
+  const straight = st.xy[(top * 1597 + 40) * 2 + 1];
+  e.figure_uniform(100);
+  st = read();
+  assert.ok(st.eyes > 0);
+  const bent = st.xy[(top * 1597 + 40) * 2 + 1];
+  assert.ok(Math.abs(bent - straight) > 0.02);
+  assert.ok(Math.abs(grown - straight) > 0.02);
+
   e.figure_tap(0);
   st = read();
-  assert.equal(st.blend, 0);
-  assert.deepEqual(Array.from(st.ink), start);
-  e.figure_blend(25);
-  st = read();
-  assert.equal(st.ink[0], 255 - 63);
-  assert.equal(st.ink[1], 63);
+  assert.equal(st.highlight, st.kind[0] + 1);
+  assert.equal(st.error, 0);
+  e.figure_tap(0);
+  assert.equal(read().highlight, 0);
+  e.figure_undo();
+  assert.equal(read().highlight, st.kind[0] + 1);
+  e.figure_tap(-3);
+  assert.equal(read().error, 2);
+  e.figure_reset();
+  e.figure_undo();
+  assert.equal(read().error, 5);
 });

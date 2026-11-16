@@ -1,5 +1,13 @@
 # Release history
 
+## v0.4
+
+Triangles grow into birds.
+
+- The picture opens as a field of equilateral triangles. Higher rows bend into interlocking birds: cream birds climb, dark birds dive.
+- A slider sets every tile to the same stage, from flat triangles to full birds. Tap a bird and every bird of that colour pulses.
+- The curves, the morph and the taps are Ada in `figure.wasm`. The page only draws the polygons. `miu.wasm` and `steps.wasm` are unchanged.
+
 ## v0.3.2
 
 The bill, the wing, and a full frame.
