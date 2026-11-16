@@ -74,6 +74,65 @@ begin
    end loop;
 
    Ant.Reset;
+   Check_World ("spread");
+   declare
+      Min_X : Natural := Ant.Width;
+      Max_X : Natural := 0;
+      Min_Y : Natural := Ant.Height;
+      Max_Y : Natural := 0;
+      X     : Natural;
+      Y     : Natural;
+   begin
+      for I in 0 .. Ant.Ant_Count - 1 loop
+         X := Ant.Ant_X (I);
+         Y := Ant.Ant_Y (I);
+         if X < Min_X then
+            Min_X := X;
+         end if;
+         if X > Max_X then
+            Max_X := X;
+         end if;
+         if Y < Min_Y then
+            Min_Y := Y;
+         end if;
+         if Y > Max_Y then
+            Max_Y := Y;
+         end if;
+      end loop;
+      Check (Max_X - Min_X > Ant.Width / 2, "ants spread across");
+      Check (Max_Y - Min_Y > Ant.Height / 2, "ants spread down");
+   end;
+   Ant.Steps (90);
+   declare
+      function Line_Hits (X0, Y0, X1, Y1 : Integer) return Natural is
+         Span : constant Integer := Integer'Max (abs (X1 - X0), abs (Y1 - Y0));
+         Hits : Natural := 0;
+         X    : Integer;
+         Y    : Integer;
+      begin
+         for I in 0 .. Span loop
+            if Span = 0 then
+               X := X0;
+               Y := Y0;
+            else
+               X := X0 + (X1 - X0) * I / Span;
+               Y := Y0 + (Y1 - Y0) * I / Span;
+            end if;
+            if Ant.Trail_At (Natural (X), Natural (Y)) >= 4 then
+               Hits := Hits + 1;
+            end if;
+         end loop;
+         return Hits;
+      end Line_Hits;
+      Nest_X : constant Integer := Ant.Width / 2;
+      Nest_Y : constant Integer := Ant.Height / 2;
+   begin
+      Check (Line_Hits (Nest_X, Nest_Y, Ant.Seed_X1, Ant.Seed_Y1) >= 2
+             or else Line_Hits (Nest_X, Nest_Y, Ant.Seed_X2, Ant.Seed_Y2) >= 2,
+             "trail between nest and food");
+   end;
+
+   Ant.Reset;
    Ant.Clear_Loads;
    for Y in 0 .. Ant.Height - 1 loop
       for X in 0 .. Ant.Width - 1 loop

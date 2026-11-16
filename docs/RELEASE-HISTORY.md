@@ -1,5 +1,13 @@
 # Release history
 
+## v0.7.1
+
+Ants wander, and the trails show the way home.
+
+- About 150 ants move in small steps across the whole field. Each one is a tiny body of three parts, and a crumb shows when it carries food.
+- A nest sits in the middle. Two foods are already there, and a tap adds more, drawn as a leaf and crumbs. Amber trails grow between the nest and the food, then fade.
+- Groups are soft blobs on the ants. From far away the colony is one outline that follows the trails. No squares.
+
 ## v0.7
 
 Ants, trails, and four voices.

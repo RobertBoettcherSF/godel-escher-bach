@@ -13,9 +13,15 @@ package Ant is
    Cluster_W : constant := (Width + Coarse - 1) / Coarse;
    Cluster_H : constant := (Height + Coarse - 1) / Coarse;
    Cluster_N : constant := Cluster_W * Cluster_H;
-   Trail_Max : constant := 16;
-   Food_Add  : constant := 8;
-   Food_Max  : constant := 24;
+   Trail_Max : constant := 36;
+   Food_Add  : constant := 10;
+   Food_Max  : constant := 30;
+   Scale     : constant := 256;
+   Seed_X1   : constant := 4;
+   Seed_Y1   : constant := 4;
+   Seed_X2   : constant := 23;
+   Seed_Y2   : constant := 13;
+   Outline_N : constant := 16;
    Voice_N   : constant := 4;
    Motif_N   : constant := 4;
    Loop_N    : constant := 16;
@@ -64,6 +70,10 @@ package Ant is
      with Export, Convention => C, External_Name => "ant_motif";
    function Voice_Address return System.Address
      with Export, Convention => C, External_Name => "ant_voice";
+   function Head_Address return System.Address
+     with Export, Convention => C, External_Name => "ant_head";
+   function Outline_Address return System.Address
+     with Export, Convention => C, External_Name => "ant_outline";
 
    procedure Reset_Exported
      with Export, Convention => C, External_Name => "ant_reset";

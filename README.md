@@ -14,7 +14,7 @@ v0.5 opens recursion. Frames nest, a tree branches, and rabbit dots follow the c
 
 v0.6 opens the crab canon. The same line of letters and the same eight notes run forward and backward together. Reversal, the palindrome check and the mirrored pitches are Ada, compiled to `crab.wasm`. v0.6.1 shows only the letters of the current word, and Another moves to the next word and its tune together. v0.6.2 lets Play loop, and lights the note each voice is sounding. v0.6.3 shows that one line on both staves, read from opposite ends. v0.6.4 keeps both staves on that line after a tap.
 
-v0.7 opens the ant fugue. Ants wander a field, food grows trails, and four voices enter on one short tune. The rules are Ada, compiled to `ant.wasm`.
+v0.7 opens the ant fugue. Ants wander a field, food grows trails, and four voices enter on one short tune. The rules are Ada, compiled to `ant.wasm`. v0.7.1 lets the ants move in small steps, and the far view is the shape of the trails.
 
 English (UK), German, Spanish and French. Three further chapters are drawn as closed tiles.
 

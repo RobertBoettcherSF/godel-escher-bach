@@ -60,7 +60,7 @@ Integers are 32-bit. Character arrays are bytes. `miu_reset`, `miu_apply(rule, p
 
 `crab.wasm` exports the letter tiles, the eight pitches and the mirrored voice. The tile count is the length of the current word. Another selects the next original melody. Ada keeps one written line and copies it to both staves on every change. At step s the upper voice sounds pitch s and the lower voice sounds pitch 7−s, which is the retrograde.
 
-`ant.wasm` exports the ants, the trail grid, the food, the clusters and the four fugue voices. A tap adds food. Ants that carry food lay a trail, and every step the trail fades by one. Clusters are coarse grid cells, and their sizes add up to the ant count. The fugue motif is four notes. Voice v enters at beat 4v. Play loops every 340 ms. Ada names both columns. Case, spaces and punctuation drop out, and accented letters fold to A, E, I, O, U, C, N or Y. German ß folds to SS. Tapping a note on either staff changes that written pitch.
+`ant.wasm` exports the ants, their headings, the trail grid, the food, the clusters, a trail outline and the four fugue voices. Positions are fixed-point, 256 units to a cell. Two foods are seeded. A tap adds more, except on the nest. Ants that carry food lay a trail, and the trail fades slowly when nothing reinforces it. Clusters are coarse grid cells, and their sizes add up to the ant count. The fugue motif is four notes. Voice v enters at beat 4v. Play loops every 420 ms.
 
 ## Licences
 
