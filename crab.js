@@ -41,8 +41,10 @@ function read() {
     upper: meta[8],
     lower: meta[9],
     letters: new Int32Array(memory, exp.crab_letters() >>> 0, 11),
-    pitches: new Int32Array(memory, exp.crab_notes() >>> 0, 8),
-    mirrors: new Int32Array(memory, exp.crab_mirrors() >>> 0, 8)
+    pitches: Array.from(new Int32Array(memory, exp.crab_notes() >>> 0, 8)),
+    mirrors: Array.from(new Int32Array(memory, exp.crab_mirrors() >>> 0, 8)),
+    upperLine: Array.from(new Int32Array(memory, exp.crab_upper_line() >>> 0, 8)),
+    lowerLine: Array.from(new Int32Array(memory, exp.crab_lower_line() >>> 0, 8))
   };
 }
 
@@ -113,8 +115,8 @@ function drawStaff(state) {
   parts.push(`<text x="24" y="${pitchY(4, LOWER_BOTTOM) + 8}" font-size="26" fill="#c4492a">←</text>`);
   for (let i = 0; i < state.notes; i += 1) {
     const x = noteX(i);
-    parts.push(noteHead(x, pitchY(state.pitches[i], UPPER_BOTTOM), true, i, pitchY(4, UPPER_BOTTOM)));
-    parts.push(noteHead(x, pitchY(state.pitches[i], LOWER_BOTTOM), false, i, pitchY(4, LOWER_BOTTOM)));
+    parts.push(noteHead(x, pitchY(state.upperLine[i], UPPER_BOTTOM), true, i, pitchY(4, UPPER_BOTTOM)));
+    parts.push(noteHead(x, pitchY(state.lowerLine[i], LOWER_BOTTOM), false, i, pitchY(4, LOWER_BOTTOM)));
   }
   parts.push(`<circle id="halo-up" pointer-events="none" r="16" fill="#e7a008" fill-opacity="0.18" stroke="#e7a008" stroke-width="4" opacity="0"/>`);
   parts.push(`<circle id="halo-down" pointer-events="none" r="16" fill="#e07a3d" fill-opacity="0.16" stroke="#e07a3d" stroke-width="4" opacity="0"/>`);
@@ -141,8 +143,8 @@ function paint(state) {
   placeMarker("bar-up", noteX(show ? up : 0), 0, show);
   placeMarker("bar-down", noteX(show ? down : 0), 0, show);
   if (show) {
-    placeMarker("halo-up", noteX(up), pitchY(state.pitches[up], UPPER_BOTTOM), true);
-    placeMarker("halo-down", noteX(down), pitchY(state.pitches[down], LOWER_BOTTOM), true);
+    placeMarker("halo-up", noteX(up), pitchY(state.upperLine[up], UPPER_BOTTOM), true);
+    placeMarker("halo-down", noteX(down), pitchY(state.lowerLine[down], LOWER_BOTTOM), true);
   } else {
     placeMarker("halo-up", 0, 0, false);
     placeMarker("halo-down", 0, 0, false);
@@ -174,8 +176,8 @@ row.addEventListener("click", (event) => {
 
 function soundBeat(state) {
   if (state.upper < 0 || state.lower < 0) return;
-  toneAt(state.pitches[state.upper], 0);
-  toneAt(state.pitches[state.lower], 1);
+  toneAt(state.upperLine[state.upper], 0);
+  toneAt(state.lowerLine[state.lower], 1);
 }
 
 function retune() {
@@ -281,7 +283,7 @@ window.addEventListener("languagechange", () => {
   if (wasm) showPair();
 });
 
-const response = await fetch("crab.wasm?v=4");
+const response = await fetch("crab.wasm?v=5");
 const {instance} = await WebAssembly.instantiate(await response.arrayBuffer());
 wasm = instance;
 wasm.exports.crab_reset();
