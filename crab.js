@@ -114,7 +114,7 @@ function drawStaff(state) {
   for (let i = 0; i < state.notes; i += 1) {
     const x = noteX(i);
     parts.push(noteHead(x, pitchY(state.pitches[i], UPPER_BOTTOM), true, i, pitchY(4, UPPER_BOTTOM)));
-    parts.push(noteHead(x, pitchY(state.mirrors[i], LOWER_BOTTOM), false, -1, pitchY(4, LOWER_BOTTOM)));
+    parts.push(noteHead(x, pitchY(state.pitches[i], LOWER_BOTTOM), false, i, pitchY(4, LOWER_BOTTOM)));
   }
   parts.push(`<circle id="halo-up" pointer-events="none" r="16" fill="#e7a008" fill-opacity="0.18" stroke="#e7a008" stroke-width="4" opacity="0"/>`);
   parts.push(`<circle id="halo-down" pointer-events="none" r="16" fill="#e07a3d" fill-opacity="0.16" stroke="#e07a3d" stroke-width="4" opacity="0"/>`);
@@ -142,7 +142,7 @@ function paint(state) {
   placeMarker("bar-down", noteX(show ? down : 0), 0, show);
   if (show) {
     placeMarker("halo-up", noteX(up), pitchY(state.pitches[up], UPPER_BOTTOM), true);
-    placeMarker("halo-down", noteX(down), pitchY(state.mirrors[down], LOWER_BOTTOM), true);
+    placeMarker("halo-down", noteX(down), pitchY(state.pitches[down], LOWER_BOTTOM), true);
   } else {
     placeMarker("halo-up", 0, 0, false);
     placeMarker("halo-down", 0, 0, false);
@@ -175,7 +175,7 @@ row.addEventListener("click", (event) => {
 function soundBeat(state) {
   if (state.upper < 0 || state.lower < 0) return;
   toneAt(state.pitches[state.upper], 0);
-  toneAt(state.mirrors[state.lower], 1);
+  toneAt(state.pitches[state.lower], 1);
 }
 
 function retune() {
@@ -281,7 +281,7 @@ window.addEventListener("languagechange", () => {
   if (wasm) showPair();
 });
 
-const response = await fetch("crab.wasm?v=3");
+const response = await fetch("crab.wasm?v=4");
 const {instance} = await WebAssembly.instantiate(await response.arrayBuffer());
 wasm = instance;
 wasm.exports.crab_reset();

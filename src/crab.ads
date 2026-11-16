@@ -30,10 +30,10 @@ package Crab is
    Step_Ms : constant := 340;
 
    function Step_Milliseconds return Natural;
-   --  Both voices share a step. The upper staff is the tune, left to right.
-   --  The lower staff is that tune written backwards, so the backward voice
-   --  walks it from the left as well. The markers meet on the middle step.
+   --  One written line. Voice 0 reads it left to right. Voice 1 reads it
+   --  right to left, so at step s it sounds the pitch at column 7-s.
    function Play_Column (Voice : Natural; Beat : Natural) return Integer;
+   function Sounding_Pitch (Voice : Natural; Beat : Natural) return Natural;
 
    procedure Set_Beat (Beat : Integer);
    procedure Cycle_Note (Index : Natural);

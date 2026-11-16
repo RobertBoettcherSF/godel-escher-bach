@@ -57,7 +57,7 @@ Integers are 32-bit. Character arrays are bytes. `miu_reset`, `miu_apply(rule, p
 
 `recursion.wasm` exports the frame depth, the tree segments and the rabbit digits. Deeper keeps going, and Back stops at the outer frame. A tap grows the whole tree by one level. Branches shorter than about a pixel are not drawn. Next adds the next rabbit count with no small cap; big counts are drawn as larger dots with a legend.
 
-`crab.wasm` exports the letter tiles, the eight pitches and the mirrored voice. The tile count is the length of the current word. Another selects the next original melody; the mirror array is that line reversed, so lower note i is upper note n+1−i. Play loops every 340 ms. Ada names the step, and the page lights that note on both staves. Case, spaces and punctuation drop out, and accented letters fold to A, E, I, O, U, C, N or Y. German ß folds to SS. Tapping a note steps its pitch, and the partner at the other end of the lower line follows.
+`crab.wasm` exports the letter tiles, the eight pitches and the mirrored voice. The tile count is the length of the current word. Another selects the next original melody. Both staves show that same line. At step s the upper voice sounds pitch s and the lower voice sounds pitch 7−s, which is the retrograde. Play loops every 340 ms. Ada names both columns. Case, spaces and punctuation drop out, and accented letters fold to A, E, I, O, U, C, N or Y. German ß folds to SS. Tapping a note on either staff changes that written pitch.
 
 ## Licences
 

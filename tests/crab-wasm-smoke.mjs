@@ -119,8 +119,9 @@ test("the row and the mirrored voice come from Ada", () => {
   st = read();
   assert.equal(st.beat, 2);
   assert.equal(st.upper, 2);
-  assert.equal(st.lower, 2);
-  assert.equal(st.mirrors[st.lower], st.pitches[7 - st.upper]);
+  assert.equal(st.lower, 5);
+  assert.equal(st.pitches[st.lower], st.pitches[7 - st.upper]);
+  assert.equal(st.pitches[st.lower], st.mirrors[st.upper]);
   e.crab_set_beat(8);
   assert.equal(read().beat, 0);
   e.crab_set_beat(-1);

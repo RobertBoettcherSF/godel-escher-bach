@@ -159,17 +159,19 @@ begin
          Slot : constant Natural := Beat mod Crab.Max_Notes;
       begin
          Check (Crab.Play_Column (0, Beat) = Integer (Slot), "upper column");
-         Check (Crab.Play_Column (1, Beat) = Integer (Slot), "lower column");
+         Check (Crab.Play_Column (1, Beat) = Integer (Crab.Max_Notes - 1 - Slot),
+                "lower column");
       end;
    end loop;
-   Crab.Select_Melody (0);
-   for Beat in 0 .. Crab.Max_Notes - 1 loop
-      declare
-         Col : constant Natural := Natural (Crab.Play_Column (1, Beat));
-      begin
-         Check (Crab.Mirror_Note (Col) = Crab.Note (Crab.Max_Notes - 1 - Beat),
-                "the step plays the tune backwards");
-      end;
+   for Trial in 1 .. 40 loop
+      Crab.Cycle_Note (Next_Rand mod Crab.Max_Notes);
+      for S in 0 .. Crab.Max_Notes - 1 loop
+         Check (Crab.Sounding_Pitch (0, S) = Crab.Note (S), "upper pitch");
+         Check (Crab.Sounding_Pitch (1, S) = Crab.Note (Crab.Max_Notes - 1 - S),
+                "lower pitch is the other end");
+         Check (Crab.Sounding_Pitch (1, S) = Crab.Mirror_Note (S),
+                "lower pitch is the retrograde");
+      end loop;
    end loop;
 
    if Failures = 0 then
