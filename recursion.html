@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Frames inside frames, a tree that branches, and rabbits counted in dots.">
+<title>Recursion</title>
+<link rel="icon" href="favicon.svg">
+<link rel="stylesheet" href="styles.css?v=7">
+<script type="module" src="recursion.js?v=2"></script>
+</head>
+<body data-page-title="chapterRec">
+<a class="skip" href="#main" data-i18n="skip">Skip to content</a>
+<header class="top">
+  <div class="topbar">
+    <a class="brand" href="gallery.html" data-i18n="brand">Strange loops</a>
+    <span class="version">v0.5 b20261116-1246 e6daeb6</span>
+  </div>
+  <div class="toolbar">
+    <div class="language-flags" role="group" data-i18n-aria="languages" aria-label="Choose a language">
+      <button type="button" data-language="en" aria-pressed="true"><span aria-hidden="true">🇬🇧</span> <span class="language-name" data-i18n="langEn">English (UK)</span></button>
+      <button type="button" data-language="de" aria-pressed="false"><span aria-hidden="true">🇩🇪</span> <span class="language-name" data-i18n="langDe">German</span></button>
+      <button type="button" data-language="es" aria-pressed="false"><span aria-hidden="true">🇪🇸</span> <span class="language-name" data-i18n="langEs">Spanish</span></button>
+      <button type="button" data-language="fr" aria-pressed="false"><span aria-hidden="true">🇫🇷</span> <span class="language-name" data-i18n="langFr">French</span></button>
+    </div>
+    <button type="button" id="sound-toggle" class="tool" aria-pressed="true"><span data-i18n="soundOn">Sound on</span></button>
+  </div>
+</header>
+<main id="main">
+  <h1 data-i18n="chapterRec">Recursion</h1>
+  <p data-i18n="recLead">Things inside things.</p>
+  <p id="resting" class="resting" hidden data-i18n="resting">The blocks are resting.</p>
+
+  <section class="rec-part" aria-labelledby="stories-title">
+    <h2 id="stories-title" data-i18n="recStories">Stories</h2>
+    <div class="story">
+      <ol id="stack" class="level-stack"></ol>
+      <div id="frames" class="frame-box"></div>
+    </div>
+    <div class="actions">
+      <button type="button" id="deeper" class="text-button"><span data-i18n="recDeeper">Deeper</span></button>
+      <button type="button" id="back" class="text-button"><span data-i18n="recBack">Back</span></button>
+    </div>
+  </section>
+
+  <section class="rec-part" aria-labelledby="tree-title">
+    <h2 id="tree-title" data-i18n="recTree">Tree</h2>
+    <svg id="tree" viewBox="0 0 1000 1000" role="img" aria-labelledby="tree-title"></svg>
+    <label class="fade rec-depth">
+      <span data-i18n="recDepth">Depth</span>
+      <input id="depth" type="range" min="0" max="10" value="5" data-i18n-aria="recDepth" aria-label="Depth">
+      <strong id="depth-n">5</strong>
+    </label>
+  </section>
+
+  <section class="rec-part" aria-labelledby="rabbits-title">
+    <h2 id="rabbits-title" data-i18n="recRabbits">Rabbits</h2>
+    <svg id="rabbits" viewBox="0 0 1000 1000" role="img" aria-labelledby="rabbits-title"></svg>
+    <p class="still"><strong id="rabbit-n">0</strong></p>
+    <div class="actions">
+      <button type="button" id="next" class="text-button"><span data-i18n="recNext">Next</span></button>
+      <button type="button" id="rabbit-reset" class="text-button"><span data-i18n="reset">Reset</span></button>
+    </div>
+  </section>
+</main>
+<footer>
+  <span data-i18n="footer">For curious children.</span>
+  <span><a href="gallery.html" data-i18n="back">Back</a> · <a href="index.html" data-i18n="replay">See the loop</a> · <a href="https://github.com/RobertBoettcherSF/godel-escher-bach" data-i18n="repository">Repository</a></span>
+</footer>
+<aside id="debug" hidden>
+  <p><span data-i18n="dbgVersion">Version</span> <span id="dbg-version"></span></p>
+  <p><span data-i18n="dbgWasm">WebAssembly</span> <span id="dbg-wasm"></span></p>
+  <p><span data-i18n="dbgString">String</span> <span id="dbg-string"></span></p>
+  <p><span data-i18n="dbgPath">Path</span> <span id="dbg-path"></span></p>
+  <p><span data-i18n="dbgError">Error</span> <span id="dbg-error"></span></p>
+</aside>
+<noscript><p>This page needs JavaScript to move the blocks.</p></noscript>
+</body>
+</html>
